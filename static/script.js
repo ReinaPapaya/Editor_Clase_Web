@@ -20,6 +20,9 @@ const fileInput = document.getElementById('file-input'); // Nuevo
 
 const alumnosTableBody = document.querySelector('#alumnos-table tbody');
 const addAlumnoButton = document.getElementById('add-alumno-button');
+const editAlumnoButton = document.getElementById('edit-alumno-button');
+const deleteAlumnoButton = document.getElementById('delete-alumno-button');
+const duplicateAlumnoButton = document.getElementById('duplicate-alumno-button');
 
 const modal = document.getElementById('student-modal');
 const modalTitle = document.getElementById('modal-title');
@@ -131,6 +134,7 @@ function loadStudents() {
             if (e.target.tagName !== 'BUTTON') { // Evita seleccionar al hacer clic en botones
                 document.querySelectorAll('#alumnos-table tbody tr').forEach(r => r.classList.remove('selected'));
                 row.classList.add('selected');
+                enableActionButtons(index);
             }
         });
 
@@ -219,7 +223,6 @@ async function downloadData() {
         alert(`Error al descargar: ${error.message}`);
     }
 }
-
 
 // Carga datos desde un archivo JSON seleccionado por el usuario
 function handleFileSelect() {
@@ -371,9 +374,6 @@ async function duplicateStudent(index) {
     }
 }
 
-
-// --- Funciones de Interacción con el Modal ---
-
 // Abre el modal para añadir un nuevo alumno
 function openAddStudentModal() {
     editingIndex = null;
@@ -402,6 +402,19 @@ function openEditStudentModal(index) {
 function closeModal() {
     modal.style.display = 'none';
     editingIndex = null; // Resetea el índice de edición
+}
+
+// Habilita/deshabilita los botones de acciones según la selección
+function enableActionButtons(index) {
+    if (index !== undefined && index >= 0) {
+        editAlumnoButton.disabled = false;
+        deleteAlumnoButton.disabled = false;
+        duplicateAlumnoButton.disabled = false;
+    } else {
+        editAlumnoButton.disabled = true;
+        deleteAlumnoButton.disabled = true;
+        duplicateAlumnoButton.disabled = true;
+    }
 }
 
 // --- Event Listeners ---
