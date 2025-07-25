@@ -39,11 +39,14 @@
                 <label for="turno">Turno:</label>
                 <input type="text" id="turno" name="turno">
                 
-                <!-- Botones para guardar -->
+                <!-- Elemento oculto para seleccionar archivo -->
+                <input type="file" id="file-input" accept=".json" style="display:none;">
+                
+                <!-- Botones para archivo -->
                 <div class="button-group">
+                     <button type="button" id="select-file-button">Seleccionar Archivo</button>
                      <button type="button" id="save-button">Guardar</button>
-                     <!-- <button type="button" id="save-as-button">Guardar Como</button> -->
-                     <!-- Para simplificar, no implementamos "Guardar Como" en esta primera iteraci\u00f3n -->
+                     <button type="button" id="save-as-button">Guardar Como</button>
                 </div>
             </form>
         </div>
@@ -62,30 +65,30 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Las filas de alumnos se generar\u00e1n aqu\u00ed din\u00e1micamente -->
+                    <!-- Las filas de alumnos se generarán aquí dinámicamente -->
                 </tbody>
             </table>
             <div class="button-group">
-                <button type="button" id="add-alumno-button">A\u00f1adir Alumno</button>
+                <button type="button" id="add-alumno-button">Añadir Alumno</button>
                 <!-- Los botones de Editar, Eliminar, Duplicar se activan al seleccionar una fila -->
             </div>
         </div>
     </div>
 
-    <!-- Modal para A\u00f1adir/Editar Alumno -->
+    <!-- Modal para Añadir/Editar Alumno -->
     <div id="student-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2 id="modal-title">A\u00f1adir Alumno</h2>
+            <h2 id="modal-title">Añadir Alumno</h2>
             <form id="student-form">
-                <input type="hidden" id="student-index"> <!-- Para saber si es edici\u00f3n -->
+                <input type="hidden" id="student-index"> <!-- Para saber si es edición -->
                 
                 <label for="student-nombre">Nombre:</label>
                 <input type="text" id="student-nombre" required>
 
                 <label for="student-fechaNacimiento">Fecha de Nacimiento (DD/MM/AAAA):</label>
                 <input type="text" id="student-fechaNacimiento" placeholder="dd/mm/aaaa" required> 
-                <!-- En una versi\u00f3n m\u00e1s avanzada, podr\u00edas usar un datepicker de JS -->
+                <!-- En una versión más avanzada, podrías usar un datepicker de JS -->
 
                 <label for="student-necesidadesEspeciales">Necesidades Especiales:</label>
                 <textarea id="student-necesidadesEspeciales"></textarea>
