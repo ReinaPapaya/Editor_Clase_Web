@@ -7,6 +7,7 @@ body {
     padding: 0;
     background-color: #defef9; /* Fondo principal */
     color: #222222;
+    font-size: 14px; /* Reducir el tamaño de fuente */
 }
 
 /* Contenedor principal */
@@ -19,7 +20,7 @@ body {
 
 /* Frame para Datos Generales */
 .general-frame {
-    flex: 0 0 auto; /* No crece, no se encoge, tama\u00f1o autom\u00e1tico basado en contenido */
+    flex: 0 0 auto; /* No crece, no se encoge, tamaño automático basado en contenido */
     width: 350px; /* Ancho fijo para el panel izquierdo */
     padding: 20px;
     background-color: #ccebf5; /* Fondo secundario */
@@ -42,7 +43,8 @@ body {
     color: #222222;
 }
 
-.general-frame input[type="text"] {
+.general-frame input[type="text"],
+.general-frame input[type="number"] {
     width: 100%;
     padding: 8px;
     margin-top: 5px;
@@ -72,13 +74,13 @@ body {
 }
 
 .general-frame .button-group button {
-    background-color: #4A90E2; /* Color de bot\u00f3n principal */
+    background-color: #4A90E2; /* Color de botón principal */
     color: #FFFFFF;
     flex-grow: 1;
 }
 
 .general-frame .button-group button:hover {
-    background-color: #3A7BC8; /* Color de bot\u00f3n principal hover */
+    background-color: #3A7BC8; /* Color de botón principal hover */
 }
 
 /* Frame para Alumnos */
@@ -122,7 +124,7 @@ body {
     border: 1px solid #ddd;
     padding: 12px;
     text-align: left;
-    white-space: nowrap; /* Evita que el texto se rompa en varias l\u00edneas */
+    white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
     overflow: hidden;
     text-overflow: ellipsis; /* Muestra puntos suspensivos si el texto es muy largo */
 }
@@ -134,7 +136,7 @@ body {
 
 #alumnos-table tbody {
     display: block;
-    max-height: calc(100vh - 250px); /* Ajusta la altura m\u00e1xima del cuerpo de la tabla */
+    max-height: calc(100vh - 250px); /* Ajusta la altura máxima del cuerpo de la tabla */
     overflow-y: auto; /* Permite scroll vertical en el cuerpo */
 }
 
@@ -158,11 +160,6 @@ body {
     background-color: #e9f7fe;
 }
 
-#alumnos-table tbody tr.selected {
-    background-color: #ccebf5 !important; /* Color al seleccionar una fila */
-    font-weight: bold;
-}
-
 #alumnos-table td:last-child { /* Columna de acciones */
     text-align: center;
     white-space: nowrap;
@@ -175,14 +172,13 @@ body {
     border-radius: 3px;
     cursor: pointer;
     font-size: 0.8em;
-    background-color: #A0B8D8; /* Color de bot\u00f3n de acci\u00f3n */
+    background-color: #A0B8D8; /* Color de botón de acción */
     color: #2D3436;
 }
 
 .action-button:hover {
-    background-color: #90A8C8; /* Color de bot\u00f3n de acci\u00f3n hover */
+    background-color: #90A8C8; /* Color de botón de acción hover */
 }
-
 
 /* Modal */
 .modal {
@@ -251,7 +247,7 @@ body {
 }
 
 .modal-content textarea {
-    height: 80px; /* Altura para las \u00e1reas de texto */
+    height: 80px; /* Altura para las áreas de texto */
     resize: vertical; /* Permite redimensionar verticalmente */
 }
 
@@ -287,8 +283,7 @@ body {
     background-color: #90A8C8;
 }
 
-
-/* Responsive para m\u00f3viles */
+/* Responsive para móviles */
 @media (max-width: 768px) {
     .container {
         flex-direction: column; /* Apila los frames verticalmente */
@@ -296,15 +291,14 @@ body {
     }
 
     .general-frame {
-        width: 100%; /* Ocupa todo el ancho en m\u00f3viles */
+        width: 100%; /* Ocupa todo el ancho en móviles */
     }
 
     .alumnos-frame {
-        /* Altura autom\u00e1tica o puedes establecer un m\u00ednimo */
+        /* Altura automática o puedes establecer un mínimo */
     }
 
     #alumnos-table tbody {
-        max-height: 400px; /* Ajusta la altura m\u00e1xima en m\u00f3viles */
+        max-height: 400px; /* Ajusta la altura máxima en móviles */
     }
 }
-
