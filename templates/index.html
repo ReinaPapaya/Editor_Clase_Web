@@ -10,7 +10,7 @@
     <div class="container">
         <!-- Frame para Datos Generales -->
         <div class="general-frame">
-            <h2>Datos Generales</h2>
+            <h2>Datos Generales <button id="select-file-button">Seleccionar Archivo</button></h2>
             <form id="datos-generales-form">
                 <label for="iei">IEI:</label>
                 <input type="text" id="iei" name="iei">
@@ -31,7 +31,7 @@
                 <input type="text" id="comaestra" name="comaestra">
 
                 <label for="edad">Edad:</label>
-                <input type="text" id="edad" name="edad">
+                <input type="number" id="edad" name="edad" min="1" max="20">
 
                 <label for="aula">Aula:</label>
                 <input type="text" id="aula" name="aula">
@@ -39,12 +39,8 @@
                 <label for="turno">Turno:</label>
                 <input type="text" id="turno" name="turno">
                 
-                <!-- Elemento oculto para seleccionar archivo -->
-                <input type="file" id="file-input" accept=".json" style="display:none;">
-                
-                <!-- Botones para archivo -->
+                <!-- Botones para guardar -->
                 <div class="button-group">
-                     <button type="button" id="select-file-button">Seleccionar Archivo</button>
                      <button type="button" id="save-button">Guardar</button>
                      <button type="button" id="save-as-button">Guardar Como</button>
                 </div>
@@ -53,7 +49,12 @@
 
         <!-- Frame para la lista de Alumnos -->
         <div class="alumnos-frame">
-            <h2>Lista de Alumnos</h2>
+            <h2>Lista de Alumnos 
+                <button id="add-alumno-button">Añadir Alumno</button>
+                <button id="edit-alumno-button" disabled>Editar</button>
+                <button id="delete-alumno-button" disabled>Eliminar</button>
+                <button id="duplicate-alumno-button" disabled>Duplicar</button>
+            </h2>
             <table id="alumnos-table">
                 <thead>
                     <tr>
@@ -68,10 +69,6 @@
                     <!-- Las filas de alumnos se generarán aquí dinámicamente -->
                 </tbody>
             </table>
-            <div class="button-group">
-                <button type="button" id="add-alumno-button">Añadir Alumno</button>
-                <!-- Los botones de Editar, Eliminar, Duplicar se activan al seleccionar una fila -->
-            </div>
         </div>
     </div>
 
@@ -87,8 +84,8 @@
                 <input type="text" id="student-nombre" required>
 
                 <label for="student-fechaNacimiento">Fecha de Nacimiento (DD/MM/AAAA):</label>
-                <input type="text" id="student-fechaNacimiento" placeholder="dd/mm/aaaa" required> 
-                <!-- En una versión más avanzada, podrías usar un datepicker de JS -->
+                <input type="date" id="student-fechaNacimiento" required> 
+                <!-- Calendario gráfico -->
 
                 <label for="student-necesidadesEspeciales">Necesidades Especiales:</label>
                 <textarea id="student-necesidadesEspeciales"></textarea>
