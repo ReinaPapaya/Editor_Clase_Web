@@ -7,7 +7,7 @@ body {
     padding: 0;
     background-color: #defef9; /* Fondo principal */
     color: #222222;
-    font-size: 14px; /* Reducir el tamaño de fuente */
+    font-size: 14px; /* Tamaño de fuente más pequeño */
 }
 
 /* Contenedor principal */
@@ -17,6 +17,56 @@ body {
     gap: 20px; /* Espacio entre los frames */
     height: calc(100vh - 40px); /* Altura del viewport menos el padding */
 }
+
+/* --- Estilos Generales para Botones --- */
+.main-button, .secondary-button, .header-button {
+    padding: 8px 12px; /* Ajustar padding */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px; /* Tamaño de fuente consistente */
+    transition: background-color 0.3s, transform 0.1s;
+    font-weight: normal; /* Evitar negritas no deseadas */
+}
+
+.main-button {
+    background-color: #4A90E2; /* Azul principal */
+    color: #FFFFFF;
+}
+.main-button:hover {
+    background-color: #3A7BC8; /* Azul principal hover */
+}
+.main-button:active {
+    transform: scale(0.98); /* Pequeño efecto al hacer clic */
+}
+
+.secondary-button {
+    background-color: #A0B8D8; /* Gris azulado */
+    color: #2D3436;
+}
+.secondary-button:hover {
+    background-color: #90A8C8; /* Gris azulado hover */
+}
+.secondary-button:active {
+    transform: scale(0.98);
+}
+
+.header-button {
+    background-color: #4A90E2; /* Azul principal para botones de encabezado */
+    color: #FFFFFF;
+    padding: 5px 10px; /* Padding más pequeño para botones de encabezado */
+    font-size: 13px; /* Fuente más pequeña */
+}
+.header-button:hover {
+    background-color: #3A7BC8; /* Azul principal hover */
+}
+.header-button:disabled {
+    background-color: #cccccc; /* Gris para botones deshabilitados */
+    color: #666666;
+    cursor: not-allowed;
+}
+/* --- Fin Estilos Generales para Botones --- */
+
 
 /* Frame para Datos Generales */
 .general-frame {
@@ -30,58 +80,48 @@ body {
     flex-direction: column;
 }
 
+.general-frame .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
 .general-frame h2 {
-    margin-top: 0;
+    margin: 0;
     color: #222222;
-    font-size: 1.2em;
+    font-size: 1.1em; /* Tamaño de fuente del título */
 }
 
 .general-frame label {
     display: block;
-    margin-top: 15px;
+    margin-top: 12px; /* Espacio reducido */
     font-weight: bold;
     color: #222222;
+    font-size: 14px; /* Consistencia */
 }
 
 .general-frame input[type="text"],
 .general-frame input[type="number"] {
     width: 100%;
-    padding: 8px;
-    margin-top: 5px;
+    padding: 6px; /* Padding reducido */
+    margin-top: 4px; /* Margen reducido */
     box-sizing: border-box;
     border: 1px solid #CCCCCC;
     border-radius: 4px;
     background-color: #FFFFFF;
     color: #262626;
-    font-size: 1em;
+    font-size: 14px; /* Consistencia */
 }
 
-.button-group {
+.general-frame .button-group {
     margin-top: 20px;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
 }
+/* No es necesario aplicar .main-button aquí porque ya se aplican en el HTML */
 
-.general-frame .button-group button,
-.alumnos-frame .button-group button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.3s;
-}
-
-.general-frame .button-group button {
-    background-color: #4A90E2; /* Color de botón principal */
-    color: #FFFFFF;
-    flex-grow: 1;
-}
-
-.general-frame .button-group button:hover {
-    background-color: #3A7BC8; /* Color de botón principal hover */
-}
 
 /* Frame para Alumnos */
 .alumnos-frame {
@@ -95,10 +135,22 @@ body {
     overflow: hidden; /* Contiene el contenido desbordante */
 }
 
+.alumnos-frame .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
 .alumnos-frame h2 {
-    margin-top: 0;
+    margin: 0;
     color: #222222;
-    font-size: 1.2em;
+    font-size: 1.1em; /* Tamaño de fuente del título */
+}
+
+.alumnos-frame .header-buttons-group {
+    display: flex;
+    gap: 8px; /* Espacio entre botones de encabezado */
 }
 
 /* Tabla de Alumnos */
@@ -109,6 +161,7 @@ body {
     flex-grow: 1; /* Ocupa el espacio disponible dentro del frame */
     overflow: auto; /* Permite scroll si la tabla es muy larga */
     display: block; /* Necesario para que overflow funcione en tbody */
+    font-size: 14px; /* Consistencia */
 }
 
 #alumnos-table thead {
@@ -122,16 +175,17 @@ body {
 #alumnos-table th,
 #alumnos-table td {
     border: 1px solid #ddd;
-    padding: 12px;
+    padding: 10px; /* Padding reducido */
     text-align: left;
     white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
     overflow: hidden;
     text-overflow: ellipsis; /* Muestra puntos suspensivos si el texto es muy largo */
+    font-size: 14px; /* Consistencia */
 }
 
 #alumnos-table th {
     font-weight: bold;
-    font-size: 0.9em;
+    font-size: 14px; /* Consistencia */
 }
 
 #alumnos-table tbody {
@@ -150,6 +204,7 @@ body {
 #alumnos-table tbody tr {
     background-color: #FFFFFF;
     transition: background-color 0.2s;
+    cursor: pointer; /* Indicar que las filas son seleccionables */
 }
 
 #alumnos-table tbody tr:nth-child(even) {
@@ -160,25 +215,11 @@ body {
     background-color: #e9f7fe;
 }
 
-#alumnos-table td:last-child { /* Columna de acciones */
-    text-align: center;
-    white-space: nowrap;
+#alumnos-table tbody tr.selected {
+    background-color: #ccebf5 !important; /* Color al seleccionar una fila */
+    font-weight: bold;
 }
 
-.action-button {
-    padding: 5px 10px;
-    margin: 0 2px;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.8em;
-    background-color: #A0B8D8; /* Color de botón de acción */
-    color: #2D3436;
-}
-
-.action-button:hover {
-    background-color: #90A8C8; /* Color de botón de acción hover */
-}
 
 /* Modal */
 .modal {
@@ -223,6 +264,7 @@ body {
 .modal-content h2 {
     margin-top: 0;
     color: #222222;
+    font-size: 1.2em; /* Tamaño de fuente del título del modal */
 }
 
 .modal-content label {
@@ -230,9 +272,11 @@ body {
     margin-top: 15px;
     font-weight: bold;
     color: #222222;
+    font-size: 14px; /* Consistencia */
 }
 
 .modal-content input[type="text"],
+.modal-content input[type="date"], /* Incluye input date */
 .modal-content textarea {
     width: 100%;
     padding: 8px;
@@ -243,7 +287,7 @@ body {
     background-color: #FFFFFF;
     color: #262626;
     font-family: Arial, sans-serif;
-    font-size: 1em;
+    font-size: 14px; /* Consistencia */
 }
 
 .modal-content textarea {
@@ -253,35 +297,12 @@ body {
 
 .modal-content .button-group {
     margin-top: 20px;
+    display: flex;
     justify-content: flex-end; /* Alinea los botones a la derecha */
+    gap: 10px; /* Espacio entre botones del modal */
 }
+/* Los estilos para .main-button y .secondary-button ya se aplican */
 
-.modal-content .button-group button {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    margin-left: 10px; /* Espacio entre botones */
-}
-
-#save-student-button {
-    background-color: #4A90E2;
-    color: #FFFFFF;
-}
-
-#save-student-button:hover {
-    background-color: #3A7BC8;
-}
-
-#cancel-student-button {
-    background-color: #A0B8D8;
-    color: #2D3436;
-}
-
-#cancel-student-button:hover {
-    background-color: #90A8C8;
-}
 
 /* Responsive para móviles */
 @media (max-width: 768px) {
@@ -300,5 +321,16 @@ body {
 
     #alumnos-table tbody {
         max-height: 400px; /* Ajusta la altura máxima en móviles */
+    }
+    
+    .alumnos-frame .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .alumnos-frame .header-buttons-group {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: space-between;
     }
 }
