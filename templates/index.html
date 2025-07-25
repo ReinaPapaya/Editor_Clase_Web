@@ -10,7 +10,12 @@
     <div class="container">
         <!-- Frame para Datos Generales -->
         <div class="general-frame">
-            <h2>Datos Generales <button id="select-file-button">Seleccionar Archivo</button></h2>
+            <div class="section-header">
+                <h2>Datos Generales</h2>
+                <button id="select-file-button" class="header-button">Seleccionar Archivo</button>
+                 <!-- Input file oculto -->
+                <input type="file" id="file-input" accept=".json" style="display:none;">
+            </div>
             <form id="datos-generales-form">
                 <label for="iei">IEI:</label>
                 <input type="text" id="iei" name="iei">
@@ -31,7 +36,7 @@
                 <input type="text" id="comaestra" name="comaestra">
 
                 <label for="edad">Edad:</label>
-                <input type="number" id="edad" name="edad" min="1" max="20">
+                <input type="number" id="edad" name="edad" min="1" max="20"> <!-- Tipo number -->
 
                 <label for="aula">Aula:</label>
                 <input type="text" id="aula" name="aula">
@@ -41,20 +46,23 @@
                 
                 <!-- Botones para guardar -->
                 <div class="button-group">
-                     <button type="button" id="save-button">Guardar</button>
-                     <button type="button" id="save-as-button">Guardar Como</button>
+                     <button type="button" id="save-button" class="main-button">Guardar</button>
+                     <button type="button" id="save-as-button" class="main-button">Guardar Como</button>
                 </div>
             </form>
         </div>
 
         <!-- Frame para la lista de Alumnos -->
         <div class="alumnos-frame">
-            <h2>Lista de Alumnos 
-                <button id="add-alumno-button">Añadir Alumno</button>
-                <button id="edit-alumno-button" disabled>Editar</button>
-                <button id="delete-alumno-button" disabled>Eliminar</button>
-                <button id="duplicate-alumno-button" disabled>Duplicar</button>
-            </h2>
+            <div class="section-header">
+                <h2>Lista de Alumnos</h2>
+                <div class="header-buttons-group">
+                    <button id="add-alumno-button" class="header-button">Añadir</button>
+                    <button id="edit-alumno-button" class="header-button" disabled>Editar</button>
+                    <button id="delete-alumno-button" class="header-button" disabled>Eliminar</button>
+                    <button id="duplicate-alumno-button" class="header-button" disabled>Duplicar</button>
+                </div>
+            </div>
             <table id="alumnos-table">
                 <thead>
                     <tr>
@@ -62,7 +70,6 @@
                         <th>Fecha Nac.</th>
                         <th>Necesidades Esp.</th>
                         <th>Notas</th>
-                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -94,8 +101,8 @@
                 <textarea id="student-notas"></textarea>
 
                 <div class="button-group">
-                    <button type="submit" id="save-student-button">Guardar Cambios</button>
-                    <button type="button" id="cancel-student-button">Cancelar</button>
+                    <button type="submit" id="save-student-button" class="main-button">Guardar Cambios</button>
+                    <button type="button" id="cancel-student-button" class="secondary-button">Cancelar</button>
                 </div>
             </form>
         </div>
