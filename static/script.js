@@ -11,6 +11,7 @@ let currentData = {
 };
 let editingIndex = null; // Para saber si estamos editando o añadiendo
 let selectedRowIndex = null; // Para rastrear la fila seleccionada
+let isDuplicating = false; // Bandera para saber si venimos de duplicar
 
 // --- Elementos del DOM ---
 const datosForm = document.getElementById('datos-generales-form');
@@ -66,7 +67,18 @@ function populateGeneralData() {
         if (datosGenerales.hasOwnProperty(field)) {
             const input = document.getElementById(field.toLowerCase());
             if (input) {
-                input.value = datosGenerales[field];
+                 // Para el campo 'Edad', simplemente mostramos el valor como texto
+                if (field === 'Edad') {
+                    // Si el valor es un número, lo convertimos a texto con "años"
+                    // Esto es para compatibilidad si en algún momento se guardó como número
+                    let edadValue = datosGenerales[field];
+                    if (typeof edadValue === 'number') {
+                        edadValue = edadValue + " años";
+                    }
+                    input.value = edadValue;
+                } else {
+                     input.value = datosGenerales[field];
+                }
             }
         }
     }
@@ -77,7 +89,12 @@ function updateGeneralDataFromForm() {
     const formData = new FormData(datosForm);
     for (const [key, value] of formData.entries()) {
         if (currentData['DatosGenerales'].hasOwnProperty(key.toUpperCase())) {
-             currentData['DatosGenerales'][key.toUpperCase()] = value;
+            // Para el campo 'Edad', guardamos el valor tal como se ingresa (texto)
+            if (key.toUpperCase() === 'EDAD') {
+                currentData['DatosGenerales']['Edad'] = value; // value ya es un string
+            } else {
+                currentData['DatosGenerales'][key.toUpperCase()] = value;
+            }
         }
     }
 }
@@ -288,6 +305,11 @@ async function editSelectedStudent() {
     studentNecesidadesInput.value = student.necesidadesEspeciales || '';
     studentNotasInput.value = student.notas || '';
     modal.style.display = 'block';
+    
+    // Si venimos de duplicar, desactivar la bandera
+    if (isDuplicating) {
+        isDuplicating = false;
+    }
 }
 
 async function deleteSelectedStudent() {
@@ -333,8 +355,25 @@ async function duplicateSelectedStudent() {
 
         const updatedData = await response.json();
         currentData = updatedData;
-        loadStudents(); // Recargar y mantener selección? O seleccionar el nuevo?
-        alert('Alumno duplicado correctamente.');
+        loadStudents();
+        
+        // --- Nueva lógica: Encontrar y seleccionar el alumno duplicado ---
+        // Suponemos que el duplicado es el último elemento añadido
+        const newIndex = currentData.alumnos.length - 1;
+        if (newIndex >= 0) {
+            // Usar setTimeout para asegurar que el DOM se haya actualizado
+            setTimeout(() => {
+                const newRow = document.querySelector(`#alumnos-table tbody tr[data-index="${newIndex}"]`);
+                if (newRow) {
+                    isDuplicating = true; // Activar bandera
+                    selectRow(newIndex, newRow); // Seleccionar la nueva fila
+                    editSelectedStudent(); // Abrir el modal de edición
+                }
+            }, 100); // 100ms debería ser suficiente
+        }
+        // --- Fin nueva lógica ---
+        
+        // alert('Alumno duplicado correctamente.'); // Opcional: eliminar el alert si se edita directamente
 
     } catch (error) {
         console.error('Error al duplicar el alumno:', error);
@@ -344,124 +383,16 @@ async function duplicateSelectedStudent() {
 
 // --- Funciones del Modal ---
 function setStudentModalDate() {
-    const edadInput = document.getElementById('edad');
-    let edad = parseInt(edadInput.value, 10);
-    if (isNaN(edad) || edad < 1 || edad > 20) {
-        edad = 3; // Valor por defecto si la edad no es válida
-    }
+    // Obtener el valor del campo Edad del formulario (no del currentData necesariamente)
+    const edadInputValue = document.getElementById('edad').value;
+    let edadAnios = 3; // Valor numérico por defecto
 
-    const today = new Date();
-    const defaultDate = new Date(today.getFullYear() - edad, today.getMonth(), today.getDate());
-
-    // Asegurar que esté dentro del rango permitido
-    const minDate = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate());
-    const finalDate = defaultDate > today ? today : (defaultDate < minDate ? minDate : defaultDate);
-
-    // Formato para input type="date" es YYYY-MM-DD
-    const year = finalDate.getFullYear();
-    const month = String(finalDate.getMonth() + 1).padStart(2, '0');
-    const day = String(finalDate.getDate()).padStart(2, '0');
-    studentFechaNacInput.value = `${year}-${month}-${day}`;
-    
-    // También establecer las restricciones del calendario
-    setFechaNacimientoConstraints();
-}
-
-function setFechaNacimientoConstraints() {
-     const today = new Date();
-     const maxDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-     const minDate = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate());
-     
-     // Formato para input type="date" es YYYY-MM-DD
-     const maxDateString = `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}-${String(maxDate.getDate()).padStart(2, '0')}`;
-     const minDateString = `${minDate.getFullYear()}-${String(minDate.getMonth() + 1).padStart(2, '0')}-${String(minDate.getDate()).padStart(2, '0')}`;
-     
-     studentFechaNacInput.max = maxDateString;
-     studentFechaNacInput.min = minDateString;
-}
-
-async function saveStudent() {
-    const studentData = {
-        nombre: studentNombreInput.value.trim(),
-        // Convertir fecha de YYYY-MM-DD a DD/MM/AAAA
-        fechaNacimiento: studentFechaNacInput.value.split('-').reverse().join('/'),
-        necesidadesEspeciales: studentNecesidadesInput.value.trim(),
-        notas: studentNotasInput.value.trim()
-    };
-
-    if (!studentData.nombre || !studentFechaNacInput.value) {
-        alert('Nombre y Fecha de Nacimiento son obligatorios.');
-        return;
-    }
-
-    try {
-        let response;
-        if (editingIndex !== null) {
-            response = await fetch(`/api/alumnos/${editingIndex}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(studentData)
-            });
-        } else {
-            response = await fetch('/api/alumnos', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(studentData)
-            });
+    if (typeof edadInputValue === 'string' && edadInputValue.includes('año')) {
+        // Intentar extraer el número si el formato es "X años"
+        const match = edadInputValue.match(/^(\d+)/);
+        if (match) {
+            edadAnios = parseInt(match[1], 10);
         }
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-        }
-
-        const updatedData = await response.json();
-        currentData = updatedData;
-        loadStudents();
-        closeModal();
-        alert(editingIndex !== null ? 'Alumno actualizado correctamente' : 'Alumno añadido correctamente');
-
-    } catch (error) {
-        console.error('Error al guardar el alumno:', error);
-        alert(`Error al guardar el alumno: ${error.message}`);
-    }
-}
-
-function closeModal() {
-    modal.style.display = 'none';
-    editingIndex = null;
-}
-
-// --- Event Listeners ---
-saveButton.addEventListener('click', saveAllData);
-saveAsButton.addEventListener('click', downloadData);
-selectFileButton.addEventListener('click', handleFileSelect);
-
-addAlumnoButton.addEventListener('click', addStudent);
-editAlumnoButton.addEventListener('click', editSelectedStudent);
-deleteAlumnoButton.addEventListener('click', deleteSelectedStudent);
-duplicateAlumnoButton.addEventListener('click', duplicateSelectedStudent);
-
-studentForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    saveStudent();
-});
-
-closeModalButton.addEventListener('click', closeModal);
-cancelStudentButton.addEventListener('click', closeModal);
-
-window.addEventListener('click', (event) => {
-    if (event.target === modal) {
-        closeModal();
-    }
-});
-
-// --- Inicialización ---
-document.addEventListener('DOMContentLoaded', loadInitialData);
-
-// --- Escuchar cambios en el campo Edad para actualizar la fecha por defecto ---
-document.getElementById('edad').addEventListener('change', setStudentModalDate);
+    } else if (!isNaN(parseInt(edadInputValue, 10))) {
+        // Si es un número válido, úsalo
+        edadAnios = parseInt(edadInputValue, 10
