@@ -9,12 +9,14 @@ let currentData = {
     },
     'alumnos': []
 };
-let editingIndex = null; // Para saber si estamos editando (-1) o a\u00f1adiendo (null)
+let editingIndex = null; // Para saber si estamos editando (-1) o añadiendo (null)
 
 // --- Elementos del DOM ---
 const datosForm = document.getElementById('datos-generales-form');
 const saveButton = document.getElementById('save-button');
-// const saveAsButton = document.getElementById('save-as-button'); // No implementado a\u00fan
+const saveAsButton = document.getElementById('save-as-button'); // Nuevo
+const selectFileButton = document.getElementById('select-file-button'); // Nuevo
+const fileInput = document.getElementById('file-input'); // Nuevo
 
 const alumnosTableBody = document.querySelector('#alumnos-table tbody');
 const addAlumnoButton = document.getElementById('add-alumno-button');
@@ -32,9 +34,9 @@ const studentFechaNacInput = document.getElementById('student-fechaNacimiento');
 const studentNecesidadesInput = document.getElementById('student-necesidadesEspeciales');
 const studentNotasInput = document.getElementById('student-notas');
 
-// --- Funciones de Carga y Actualizaci\u00f3n de UI ---
+// --- Funciones de Carga y Actualización de UI ---
 
-// Carga los datos iniciales al cargar la p\u00e1gina
+// Carga los datos iniciales al cargar la página
 async function loadInitialData() {
     try {
         const response = await fetch('/api/datos');
@@ -47,7 +49,7 @@ async function loadInitialData() {
         loadStudents(); // Llena la tabla de alumnos
     } catch (error) {
         console.error('Error al cargar los datos iniciales:', error);
-        alert('Error al cargar los datos. Por favor, recarga la p\u00e1gina.');
+        alert('Error al cargar los datos. Por favor, recarga la página.');
     }
 }
 
@@ -68,8 +70,8 @@ function populateGeneralData() {
 function updateGeneralDataFromForm() {
     const formData = new FormData(datosForm);
     for (const [key, value] of formData.entries()) {
-        // Aseg\u00farese de que la clave exista en la estructura esperada
-        if (currentData['DatosGenerales'].hasOwnProperty(key.toUpperCase())) {
+        // Asegúrate de que la clave exista en la estructura esperada y no sea el input file
+        if (key !== 'file-input' && currentData['DatosGenerales'].hasOwnProperty(key.toUpperCase())) {
              currentData['DatosGenerales'][key.toUpperCase()] = value;
         }
     }
@@ -81,7 +83,7 @@ function loadStudents() {
 
     currentData['alumnos'].forEach((student, index) => {
         const row = document.createElement('tr');
-        row.setAttribute('data-index', index); // Almacena el \u00edndice en el atributo data
+        row.setAttribute('data-index', index); // Almacena el índice en el atributo data
 
         // Crear celdas para cada propiedad del alumno
         const nombreCell = document.createElement('td');
@@ -124,7 +126,7 @@ function loadStudents() {
         
         row.appendChild(actionsCell);
 
-        // A\u00f1adir evento para seleccionar fila (opcional, para futuras mejoras)
+        // Añadir evento para seleccionar fila (opcional, para futuras mejoras)
         row.addEventListener('click', (e) => {
             if (e.target.tagName !== 'BUTTON') { // Evita seleccionar al hacer clic en botones
                 document.querySelectorAll('#alumnos-table tbody tr').forEach(r => r.classList.remove('selected'));
@@ -136,11 +138,11 @@ function loadStudents() {
     });
 }
 
-// --- Funciones de Interacci\u00f3n con la API ---
+// --- Funciones de Interacción con la API ---
 
 // Guarda todos los datos (DatosGenerales + Alumnos)
 async function saveAllData() {
-    updateGeneralDataFromForm(); // Aseg\u00farese de que los datos del form est\u00e9n actualizados
+    updateGeneralDataFromForm(); // Asegúrate de que los datos del form estén actualizados
     try {
         const response = await fetch('/api/datos', {
             method: 'POST',
@@ -164,7 +166,109 @@ async function saveAllData() {
     }
 }
 
-// A\u00f1ade o edita un alumno
+// Descarga los datos actuales como un archivo JSON
+async function downloadData() {
+    try {
+        // Actualiza los datos generales del formulario antes de descargar
+        updateGeneralDataFromForm();
+        
+        // Realiza la solicitud GET para descargar
+        const response = await fetch('/api/descargar_datos');
+        
+        if (!response.ok) {
+             // Intenta leer el error JSON si la respuesta no es exitosa
+            let errorMsg = `HTTP error! status: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.error || errorMsg;
+            } catch (e) {
+                // Si no se puede parsear como JSON, usa el mensaje de estado
+            }
+            throw new Error(errorMsg);
+        }
+
+        // Obtener el nombre del archivo del encabezado Content-Disposition
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'datos_clase.json'; // Nombre por defecto
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch.length === 2) {
+                filename = filenameMatch[1];
+            }
+        }
+
+        // Crear un blob a partir del stream de la respuesta
+        const blob = await response.blob();
+
+        // Crear un enlace temporal para la descarga
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename; // Nombre del archivo
+        document.body.appendChild(a);
+        a.click();
+
+        // Limpiar
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        alert('Datos descargados correctamente.');
+        
+    } catch (error) {
+        console.error('Error al descargar los datos:', error);
+        alert(`Error al descargar: ${error.message}`);
+    }
+}
+
+
+// Carga datos desde un archivo JSON seleccionado por el usuario
+function handleFileSelect() {
+    fileInput.click(); // Simula un clic en el input file oculto
+}
+
+// Maneja el evento cuando se selecciona un archivo
+fileInput.addEventListener('change', async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Verificar tipo de archivo (opcional, ya se hace en el backend)
+    if (!file.name.endsWith('.json')) {
+        alert('Por favor, selecciona un archivo con extensión .json');
+        fileInput.value = ''; // Limpiar la selección
+        return;
+    }
+
+    // Crear un objeto FormData para enviar el archivo
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/api/cargar_archivo', {
+            method: 'POST',
+            body: formData
+            // No establecer Content-Type, deja que el navegador lo haga con el boundary correcto
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
+        const loadedData = await response.json();
+        currentData = loadedData; // Actualiza los datos locales con los cargados
+        populateGeneralData(); // Actualiza el formulario
+        loadStudents(); // Actualiza la tabla
+        fileInput.value = ''; // Limpiar la selección
+        alert('Archivo cargado y datos actualizados correctamente.');
+        
+    } catch (error) {
+        console.error('Error al cargar el archivo:', error);
+        alert(`Error al cargar el archivo: ${error.message}`);
+        fileInput.value = ''; // Limpiar la selección en caso de error
+    }
+});
+
+// Añade o edita un alumno
 async function saveStudent() {
     const studentData = {
         nombre: studentNombreInput.value.trim(),
@@ -190,7 +294,7 @@ async function saveStudent() {
                 body: JSON.stringify(studentData)
             });
         } else {
-            // A\u00f1adir nuevo alumno
+            // Añadir nuevo alumno
             response = await fetch('/api/alumnos', {
                 method: 'POST',
                 headers: {
@@ -209,7 +313,7 @@ async function saveStudent() {
         currentData = updatedData; // Actualiza los datos locales con los devueltos por la API
         loadStudents(); // Recarga la tabla
         closeModal(); // Cierra el modal
-        alert(editingIndex !== null ? 'Alumno actualizado correctamente' : 'Alumno a\u00f1adido correctamente');
+        alert(editingIndex !== null ? 'Alumno actualizado correctamente' : 'Alumno añadido correctamente');
 
     } catch (error) {
         console.error('Error al guardar el alumno:', error);
@@ -219,7 +323,7 @@ async function saveStudent() {
 
 // Elimina un alumno
 async function deleteStudent(index) {
-    if (!confirm('¿Est\u00e1s seguro de que quieres eliminar este alumno?')) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este alumno?')) {
         return;
     }
 
@@ -268,12 +372,12 @@ async function duplicateStudent(index) {
 }
 
 
-// --- Funciones de Interacci\u00f3n con el Modal ---
+// --- Funciones de Interacción con el Modal ---
 
-// Abre el modal para a\u00f1adir un nuevo alumno
+// Abre el modal para añadir un nuevo alumno
 function openAddStudentModal() {
     editingIndex = null;
-    modalTitle.textContent = 'A\u00f1adir Alumno';
+    modalTitle.textContent = 'Añadir Alumno';
     studentForm.reset(); // Limpia el formulario del modal
     studentIndexInput.value = ''; // Limpia el campo oculto
     modal.style.display = 'block';
@@ -297,7 +401,7 @@ function openEditStudentModal(index) {
 // Cierra el modal
 function closeModal() {
     modal.style.display = 'none';
-    editingIndex = null; // Resetea el \u00edndice de edici\u00f3n
+    editingIndex = null; // Resetea el índice de edición
 }
 
 // --- Event Listeners ---
@@ -305,19 +409,25 @@ function closeModal() {
 // Guardar todos los datos
 saveButton.addEventListener('click', saveAllData);
 
-// A\u00f1adir alumno
+// Guardar Como (Descargar)
+saveAsButton.addEventListener('click', downloadData);
+
+// Seleccionar Archivo (Cargar)
+selectFileButton.addEventListener('click', handleFileSelect);
+
+// Añadir alumno
 addAlumnoButton.addEventListener('click', openAddStudentModal);
 
 // Enviar formulario del modal (guardar alumno)
 studentForm.addEventListener('submit', (e) => {
-    e.preventDefault(); // Evita el env\u00edo normal del formulario
+    e.preventDefault(); // Evita el envío normal del formulario
     saveStudent();
 });
 
 // Cerrar modal con la X
 closeModalButton.addEventListener('click', closeModal);
 
-// Cerrar modal con el bot\u00f3n Cancelar
+// Cerrar modal con el botón Cancelar
 cancelStudentButton.addEventListener('click', closeModal);
 
 // Cerrar modal haciendo clic fuera del contenido
@@ -327,7 +437,6 @@ window.addEventListener('click', (event) => {
     }
 });
 
-// --- Inicializaci\u00f3n ---
-// Carga los datos cuando la p\u00e1gina se haya cargado completamente
+// --- Inicialización ---
+// Carga los datos cuando la página se haya cargado completamente
 document.addEventListener('DOMContentLoaded', loadInitialData);
-
