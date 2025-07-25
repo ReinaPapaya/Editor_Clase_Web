@@ -101,8 +101,7 @@ body {
     font-size: 14px; /* Consistencia */
 }
 
-.general-frame input[type="text"],
-.general-frame input[type="number"] {
+.general-frame input[type="text"] {
     width: 100%;
     padding: 6px; /* Padding reducido */
     margin-top: 4px; /* Margen reducido */
@@ -153,21 +152,26 @@ body {
     gap: 8px; /* Espacio entre botones de encabezado */
 }
 
-/* Tabla de Alumnos */
+/* --- Corrección para la Tabla de Alumnos (Eliminar doble scroll horizontal) --- */
 #alumnos-table {
     width: 100%;
+    /* ELIMINADO: display: block;  <- Esta era la causa principal del doble scroll */
     border-collapse: collapse;
     margin-top: 10px;
-    flex-grow: 1; /* Ocupa el espacio disponible dentro del frame */
-    overflow: auto; /* Permite scroll si la tabla es muy larga */
-    display: block; /* Necesario para que overflow funcione en tbody */
-    font-size: 14px; /* Consistencia */
+    flex-grow: 1;
+    /* ELIMINADO: overflow: auto; <- El contenedor padre ya maneja el scroll */
+    font-size: 14px;
+}
+
+#alumnos-table thead, #alumnos-table tbody {
+    /* ELIMINADO: display: block; <- Esto también contribuía al problema */
+    width: 100%;
 }
 
 #alumnos-table thead {
-    background-color: #4A90E2; /* Fondo del encabezado */
+    background-color: #4A90E2;
     color: #FFFFFF;
-    position: sticky; /* Hace que el encabezado se quede fijo al hacer scroll */
+    position: sticky;
     top: 0;
     z-index: 10;
 }
@@ -175,30 +179,45 @@ body {
 #alumnos-table th,
 #alumnos-table td {
     border: 1px solid #ddd;
-    padding: 10px; /* Padding reducido */
+    padding: 10px;
     text-align: left;
-    white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
+    /* Añadido para manejar texto largo */
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Muestra puntos suspensivos si el texto es muy largo */
-    font-size: 14px; /* Consistencia */
+    text-overflow: ellipsis;
+    font-size: 14px;
+    /* Asegurar que las celdas se distribuyan correctamente */
+    box-sizing: border-box;
 }
 
-#alumnos-table th {
-    font-weight: bold;
-    font-size: 14px; /* Consistencia */
-}
+/* Asegurar que las columnas tengan un ancho razonable */
+#alumnos-table th:nth-child(1), #alumnos-table td:nth-child(1) { width: 25%; } /* Nombre */
+#alumnos-table th:nth-child(2), #alumnos-table td:nth-child(2) { width: 15%; } /* Fecha */
+#alumnos-table th:nth-child(3), #alumnos-table td:nth-child(3) { width: 30%; } /* Necesidades */
+#alumnos-table th:nth-child(4), #alumnos-table td:nth-child(4) { width: 20%; } /* Notas */
+/* Acciones se eliminaron de la tabla */
+
 
 #alumnos-table tbody {
-    display: block;
-    max-height: calc(100vh - 250px); /* Ajusta la altura máxima del cuerpo de la tabla */
-    overflow-y: auto; /* Permite scroll vertical en el cuerpo */
+    /* display: block; ELIMINADO */
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    overflow-x: hidden; /* Ocultar scroll horizontal interno si lo hay */
+    width: 100%;
+    display: block; /* Mantener display block SOLO para el tbody para el scroll-y */
 }
 
-#alumnos-table thead, #alumnos-table tbody tr {
+#alumnos-table thead tr {
     display: table;
     width: 100%;
-    table-layout: fixed; /* Asegura que las columnas tengan un ancho fijo */
+    table-layout: fixed;
 }
+#alumnos-table tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+/* --- Fin Corrección Tabla --- */
 
 
 #alumnos-table tbody tr {
