@@ -1,0 +1,310 @@
+/* static/styles.css */
+
+/* Fondo principal y general */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #defef9; /* Fondo principal */
+    color: #222222;
+}
+
+/* Contenedor principal */
+.container {
+    display: flex;
+    padding: 20px;
+    gap: 20px; /* Espacio entre los frames */
+    height: calc(100vh - 40px); /* Altura del viewport menos el padding */
+}
+
+/* Frame para Datos Generales */
+.general-frame {
+    flex: 0 0 auto; /* No crece, no se encoge, tama\u00f1o autom\u00e1tico basado en contenido */
+    width: 350px; /* Ancho fijo para el panel izquierdo */
+    padding: 20px;
+    background-color: #ccebf5; /* Fondo secundario */
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.general-frame h2 {
+    margin-top: 0;
+    color: #222222;
+    font-size: 1.2em;
+}
+
+.general-frame label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    color: #222222;
+}
+
+.general-frame input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    background-color: #FFFFFF;
+    color: #262626;
+    font-size: 1em;
+}
+
+.button-group {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.general-frame .button-group button,
+.alumnos-frame .button-group button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s;
+}
+
+.general-frame .button-group button {
+    background-color: #4A90E2; /* Color de bot\u00f3n principal */
+    color: #FFFFFF;
+    flex-grow: 1;
+}
+
+.general-frame .button-group button:hover {
+    background-color: #3A7BC8; /* Color de bot\u00f3n principal hover */
+}
+
+/* Frame para Alumnos */
+.alumnos-frame {
+    flex: 1; /* Ocupa el espacio restante */
+    padding: 20px;
+    background-color: #defef9; /* Fondo principal */
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Contiene el contenido desbordante */
+}
+
+.alumnos-frame h2 {
+    margin-top: 0;
+    color: #222222;
+    font-size: 1.2em;
+}
+
+/* Tabla de Alumnos */
+#alumnos-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    flex-grow: 1; /* Ocupa el espacio disponible dentro del frame */
+    overflow: auto; /* Permite scroll si la tabla es muy larga */
+    display: block; /* Necesario para que overflow funcione en tbody */
+}
+
+#alumnos-table thead {
+    background-color: #4A90E2; /* Fondo del encabezado */
+    color: #FFFFFF;
+    position: sticky; /* Hace que el encabezado se quede fijo al hacer scroll */
+    top: 0;
+    z-index: 10;
+}
+
+#alumnos-table th,
+#alumnos-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    white-space: nowrap; /* Evita que el texto se rompa en varias l\u00edneas */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Muestra puntos suspensivos si el texto es muy largo */
+}
+
+#alumnos-table th {
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+#alumnos-table tbody {
+    display: block;
+    max-height: calc(100vh - 250px); /* Ajusta la altura m\u00e1xima del cuerpo de la tabla */
+    overflow-y: auto; /* Permite scroll vertical en el cuerpo */
+}
+
+#alumnos-table thead, #alumnos-table tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed; /* Asegura que las columnas tengan un ancho fijo */
+}
+
+
+#alumnos-table tbody tr {
+    background-color: #FFFFFF;
+    transition: background-color 0.2s;
+}
+
+#alumnos-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#alumnos-table tbody tr:hover {
+    background-color: #e9f7fe;
+}
+
+#alumnos-table tbody tr.selected {
+    background-color: #ccebf5 !important; /* Color al seleccionar una fila */
+    font-weight: bold;
+}
+
+#alumnos-table td:last-child { /* Columna de acciones */
+    text-align: center;
+    white-space: nowrap;
+}
+
+.action-button {
+    padding: 5px 10px;
+    margin: 0 2px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8em;
+    background-color: #A0B8D8; /* Color de bot\u00f3n de acci\u00f3n */
+    color: #2D3436;
+}
+
+.action-button:hover {
+    background-color: #90A8C8; /* Color de bot\u00f3n de acci\u00f3n hover */
+}
+
+
+/* Modal */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5); /* Fondo semitransparente */
+}
+
+.modal-content {
+    background-color: #ccebf5; /* Fondo secundario */
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+.close:hover,
+.close:focus {
+    color: #222222;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #222222;
+}
+
+.modal-content label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    color: #222222;
+}
+
+.modal-content input[type="text"],
+.modal-content textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    background-color: #FFFFFF;
+    color: #262626;
+    font-family: Arial, sans-serif;
+    font-size: 1em;
+}
+
+.modal-content textarea {
+    height: 80px; /* Altura para las \u00e1reas de texto */
+    resize: vertical; /* Permite redimensionar verticalmente */
+}
+
+.modal-content .button-group {
+    margin-top: 20px;
+    justify-content: flex-end; /* Alinea los botones a la derecha */
+}
+
+.modal-content .button-group button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: 10px; /* Espacio entre botones */
+}
+
+#save-student-button {
+    background-color: #4A90E2;
+    color: #FFFFFF;
+}
+
+#save-student-button:hover {
+    background-color: #3A7BC8;
+}
+
+#cancel-student-button {
+    background-color: #A0B8D8;
+    color: #2D3436;
+}
+
+#cancel-student-button:hover {
+    background-color: #90A8C8;
+}
+
+
+/* Responsive para m\u00f3viles */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column; /* Apila los frames verticalmente */
+        height: auto;
+    }
+
+    .general-frame {
+        width: 100%; /* Ocupa todo el ancho en m\u00f3viles */
+    }
+
+    .alumnos-frame {
+        /* Altura autom\u00e1tica o puedes establecer un m\u00ednimo */
+    }
+
+    #alumnos-table tbody {
+        max-height: 400px; /* Ajusta la altura m\u00e1xima en m\u00f3viles */
+    }
+}
+
