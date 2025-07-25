@@ -9,14 +9,15 @@ let currentData = {
     },
     'alumnos': []
 };
-let editingIndex = null; // Para saber si estamos editando (-1) o añadiendo (null)
+let editingIndex = null; // Para saber si estamos editando o añadiendo
+let selectedRowIndex = null; // Para rastrear la fila seleccionada
 
 // --- Elementos del DOM ---
 const datosForm = document.getElementById('datos-generales-form');
 const saveButton = document.getElementById('save-button');
-const saveAsButton = document.getElementById('save-as-button'); // Nuevo
-const selectFileButton = document.getElementById('select-file-button'); // Nuevo
-const fileInput = document.getElementById('file-input'); // Nuevo
+const saveAsButton = document.getElementById('save-as-button');
+const selectFileButton = document.getElementById('select-file-button');
+const fileInput = document.getElementById('file-input'); // Input file oculto
 
 const alumnosTableBody = document.querySelector('#alumnos-table tbody');
 const addAlumnoButton = document.getElementById('add-alumno-button');
@@ -47,9 +48,11 @@ async function loadInitialData() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        currentData = data; // Guarda los datos cargados globalmente
-        populateGeneralData(); // Llena el formulario de datos generales
-        loadStudents(); // Llena la tabla de alumnos
+        currentData = data;
+        populateGeneralData();
+        loadStudents();
+        // Establecer restricciones de fecha después de cargar los datos generales
+        setFechaNacimientoConstraints();
     } catch (error) {
         console.error('Error al cargar los datos iniciales:', error);
         alert('Error al cargar los datos. Por favor, recarga la página.');
@@ -73,8 +76,7 @@ function populateGeneralData() {
 function updateGeneralDataFromForm() {
     const formData = new FormData(datosForm);
     for (const [key, value] of formData.entries()) {
-        // Asegúrate de que la clave exista en la estructura esperada y no sea el input file
-        if (key !== 'file-input' && currentData['DatosGenerales'].hasOwnProperty(key.toUpperCase())) {
+        if (currentData['DatosGenerales'].hasOwnProperty(key.toUpperCase())) {
              currentData['DatosGenerales'][key.toUpperCase()] = value;
         }
     }
@@ -83,12 +85,13 @@ function updateGeneralDataFromForm() {
 // Carga y muestra la lista de alumnos en la tabla
 function loadStudents() {
     alumnosTableBody.innerHTML = ''; // Limpia la tabla
+    selectedRowIndex = null; // Resetear selección
+    updateActionButtons(); // Deshabilitar botones de acción
 
     currentData['alumnos'].forEach((student, index) => {
         const row = document.createElement('tr');
-        row.setAttribute('data-index', index); // Almacena el índice en el atributo data
+        row.setAttribute('data-index', index);
 
-        // Crear celdas para cada propiedad del alumno
         const nombreCell = document.createElement('td');
         nombreCell.textContent = student.nombre;
         row.appendChild(nombreCell);
@@ -105,48 +108,42 @@ function loadStudents() {
         notasCell.textContent = student.notas;
         row.appendChild(notasCell);
 
-        // Celda para acciones
-        const actionsCell = document.createElement('td');
-        
-        const editButton = document.createElement('button');
-        editButton.textContent = 'Editar';
-        editButton.classList.add('action-button');
-        editButton.onclick = () => openEditStudentModal(index);
-
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Eliminar';
-        deleteButton.classList.add('action-button');
-        deleteButton.onclick = () => deleteStudent(index);
-        
-        const duplicateButton = document.createElement('button');
-        duplicateButton.textContent = 'Duplicar';
-        duplicateButton.classList.add('action-button');
-        duplicateButton.onclick = () => duplicateStudent(index);
-
-        actionsCell.appendChild(editButton);
-        actionsCell.appendChild(deleteButton);
-        actionsCell.appendChild(duplicateButton);
-        
-        row.appendChild(actionsCell);
-
-        // Añadir evento para seleccionar fila (opcional, para futuras mejoras)
-        row.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'BUTTON') { // Evita seleccionar al hacer clic en botones
-                document.querySelectorAll('#alumnos-table tbody tr').forEach(r => r.classList.remove('selected'));
-                row.classList.add('selected');
-                enableActionButtons(index);
-            }
-        });
+        // Evento para seleccionar fila
+        row.addEventListener('click', () => selectRow(index, row));
 
         alumnosTableBody.appendChild(row);
     });
+}
+
+// Función para seleccionar una fila
+function selectRow(index, rowElement) {
+    // Deseleccionar fila anterior
+    if (selectedRowIndex !== null) {
+        const previousRow = document.querySelector(`#alumnos-table tbody tr[data-index="${selectedRowIndex}"]`);
+        if (previousRow) {
+            previousRow.classList.remove('selected');
+        }
+    }
+
+    // Seleccionar nueva fila
+    selectedRowIndex = index;
+    rowElement.classList.add('selected');
+    updateActionButtons(); // Habilitar botones de acción
+}
+
+// Actualiza el estado de los botones de acción según si hay una fila seleccionada
+function updateActionButtons() {
+    const isDisabled = selectedRowIndex === null;
+    editAlumnoButton.disabled = isDisabled;
+    deleteAlumnoButton.disabled = isDisabled;
+    duplicateAlumnoButton.disabled = isDisabled;
 }
 
 // --- Funciones de Interacción con la API ---
 
 // Guarda todos los datos (DatosGenerales + Alumnos)
 async function saveAllData() {
-    updateGeneralDataFromForm(); // Asegúrate de que los datos del form estén actualizados
+    updateGeneralDataFromForm();
     try {
         const response = await fetch('/api/datos', {
             method: 'POST',
@@ -173,14 +170,11 @@ async function saveAllData() {
 // Descarga los datos actuales como un archivo JSON
 async function downloadData() {
     try {
-        // Actualiza los datos generales del formulario antes de descargar
-        updateGeneralDataFromForm();
-        
-        // Realiza la solicitud GET para descargar
+        updateGeneralDataFromForm(); // Asegurarse de guardar datos del form primero
+
         const response = await fetch('/api/descargar_datos');
-        
+
         if (!response.ok) {
-             // Intenta leer el error JSON si la respuesta no es exitosa
             let errorMsg = `HTTP error! status: ${response.status}`;
             try {
                 const errorData = await response.json();
@@ -191,57 +185,48 @@ async function downloadData() {
             throw new Error(errorMsg);
         }
 
-        // Obtener el nombre del archivo del encabezado Content-Disposition
         const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'datos_clase.json'; // Nombre por defecto
+        let filename = 'datos_clase.json';
         if (contentDisposition) {
             const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (filenameMatch.length === 2) {
+            if (filenameMatch && filenameMatch[1]) {
                 filename = filenameMatch[1];
             }
         }
 
-        // Crear un blob a partir del stream de la respuesta
         const blob = await response.blob();
-
-        // Crear un enlace temporal para la descarga
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = filename; // Nombre del archivo
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
-
-        // Limpiar
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         alert('Datos descargados correctamente.');
-        
+
     } catch (error) {
         console.error('Error al descargar los datos:', error);
         alert(`Error al descargar: ${error.message}`);
     }
 }
 
-// Carga datos desde un archivo JSON seleccionado por el usuario
+// --- Funcionalidad de Carga de Archivo ---
 function handleFileSelect() {
     fileInput.click(); // Simula un clic en el input file oculto
 }
 
-// Maneja el evento cuando se selecciona un archivo
 fileInput.addEventListener('change', async function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Verificar tipo de archivo (opcional, ya se hace en el backend)
     if (!file.name.endsWith('.json')) {
         alert('Por favor, selecciona un archivo con extensión .json');
-        fileInput.value = ''; // Limpiar la selección
+        fileInput.value = '';
         return;
     }
 
-    // Crear un objeto FormData para enviar el archivo
     const formData = new FormData();
     formData.append('file', file);
 
@@ -249,7 +234,6 @@ fileInput.addEventListener('change', async function(event) {
         const response = await fetch('/api/cargar_archivo', {
             method: 'POST',
             body: formData
-            // No establecer Content-Type, deja que el navegador lo haga con el boundary correcto
         });
 
         if (!response.ok) {
@@ -258,29 +242,154 @@ fileInput.addEventListener('change', async function(event) {
         }
 
         const loadedData = await response.json();
-        currentData = loadedData; // Actualiza los datos locales con los cargados
-        populateGeneralData(); // Actualiza el formulario
-        loadStudents(); // Actualiza la tabla
+        currentData = loadedData;
+        populateGeneralData();
+        loadStudents();
         fileInput.value = ''; // Limpiar la selección
         alert('Archivo cargado y datos actualizados correctamente.');
-        
+        setFechaNacimientoConstraints(); // Reestablecer restricciones de fecha
+
     } catch (error) {
         console.error('Error al cargar el archivo:', error);
         alert(`Error al cargar el archivo: ${error.message}`);
-        fileInput.value = ''; // Limpiar la selección en caso de error
+        fileInput.value = '';
     }
 });
+// --- Fin Funcionalidad de Carga de Archivo ---
 
-// Añade o edita un alumno
+// --- Funciones para Alumnos ---
+async function addStudent() {
+    editingIndex = null;
+    modalTitle.textContent = 'Añadir Alumno';
+    studentForm.reset();
+    studentIndexInput.value = '';
+    setStudentModalDate(); // Establecer fecha por defecto
+    modal.style.display = 'block';
+}
+
+async function editSelectedStudent() {
+    if (selectedRowIndex === null) return;
+
+    const student = currentData['alumnos'][selectedRowIndex];
+    if (!student) return;
+
+    editingIndex = selectedRowIndex;
+    modalTitle.textContent = 'Editar Alumno';
+    studentIndexInput.value = editingIndex;
+    studentNombreInput.value = student.nombre || '';
+    // Formato de fecha para input type="date" es YYYY-MM-DD
+    const parts = student.fechaNacimiento.split('/');
+    if (parts.length === 3) {
+        const formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        studentFechaNacInput.value = formattedDate;
+    } else {
+        studentFechaNacInput.value = ''; // O manejar error
+    }
+    studentNecesidadesInput.value = student.necesidadesEspeciales || '';
+    studentNotasInput.value = student.notas || '';
+    modal.style.display = 'block';
+}
+
+async function deleteSelectedStudent() {
+    if (selectedRowIndex === null) return;
+
+    if (!confirm('¿Estás seguro de que quieres eliminar este alumno?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/alumnos/${selectedRowIndex}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
+        const updatedData = await response.json();
+        currentData = updatedData;
+        loadStudents(); // Esto también reseteará selectedRowIndex
+        alert('Alumno eliminado correctamente.');
+
+    } catch (error) {
+        console.error('Error al eliminar el alumno:', error);
+        alert(`Error al eliminar el alumno: ${error.message}`);
+    }
+}
+
+async function duplicateSelectedStudent() {
+    if (selectedRowIndex === null) return;
+
+    try {
+        const response = await fetch(`/api/alumnos/${selectedRowIndex}/duplicate`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
+        const updatedData = await response.json();
+        currentData = updatedData;
+        loadStudents(); // Recargar y mantener selección? O seleccionar el nuevo?
+        alert('Alumno duplicado correctamente.');
+
+    } catch (error) {
+        console.error('Error al duplicar el alumno:', error);
+        alert(`Error al duplicar el alumno: ${error.message}`);
+    }
+}
+
+// --- Funciones del Modal ---
+function setStudentModalDate() {
+    const edadInput = document.getElementById('edad');
+    let edad = parseInt(edadInput.value, 10);
+    if (isNaN(edad) || edad < 1 || edad > 20) {
+        edad = 3; // Valor por defecto si la edad no es válida
+    }
+
+    const today = new Date();
+    const defaultDate = new Date(today.getFullYear() - edad, today.getMonth(), today.getDate());
+
+    // Asegurar que esté dentro del rango permitido
+    const minDate = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate());
+    const finalDate = defaultDate > today ? today : (defaultDate < minDate ? minDate : defaultDate);
+
+    // Formato para input type="date" es YYYY-MM-DD
+    const year = finalDate.getFullYear();
+    const month = String(finalDate.getMonth() + 1).padStart(2, '0');
+    const day = String(finalDate.getDate()).padStart(2, '0');
+    studentFechaNacInput.value = `${year}-${month}-${day}`;
+    
+    // También establecer las restricciones del calendario
+    setFechaNacimientoConstraints();
+}
+
+function setFechaNacimientoConstraints() {
+     const today = new Date();
+     const maxDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+     const minDate = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate());
+     
+     // Formato para input type="date" es YYYY-MM-DD
+     const maxDateString = `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}-${String(maxDate.getDate()).padStart(2, '0')}`;
+     const minDateString = `${minDate.getFullYear()}-${String(minDate.getMonth() + 1).padStart(2, '0')}-${String(minDate.getDate()).padStart(2, '0')}`;
+     
+     studentFechaNacInput.max = maxDateString;
+     studentFechaNacInput.min = minDateString;
+}
+
 async function saveStudent() {
     const studentData = {
         nombre: studentNombreInput.value.trim(),
-        fechaNacimiento: studentFechaNacInput.value.trim(),
+        // Convertir fecha de YYYY-MM-DD a DD/MM/AAAA
+        fechaNacimiento: studentFechaNacInput.value.split('-').reverse().join('/'),
         necesidadesEspeciales: studentNecesidadesInput.value.trim(),
         notas: studentNotasInput.value.trim()
     };
 
-    if (!studentData.nombre || !studentData.fechaNacimiento) {
+    if (!studentData.nombre || !studentFechaNacInput.value) {
         alert('Nombre y Fecha de Nacimiento son obligatorios.');
         return;
     }
@@ -288,7 +397,6 @@ async function saveStudent() {
     try {
         let response;
         if (editingIndex !== null) {
-            // Editar alumno existente
             response = await fetch(`/api/alumnos/${editingIndex}`, {
                 method: 'PUT',
                 headers: {
@@ -297,7 +405,6 @@ async function saveStudent() {
                 body: JSON.stringify(studentData)
             });
         } else {
-            // Añadir nuevo alumno
             response = await fetch('/api/alumnos', {
                 method: 'POST',
                 headers: {
@@ -313,9 +420,9 @@ async function saveStudent() {
         }
 
         const updatedData = await response.json();
-        currentData = updatedData; // Actualiza los datos locales con los devueltos por la API
-        loadStudents(); // Recarga la tabla
-        closeModal(); // Cierra el modal
+        currentData = updatedData;
+        loadStudents();
+        closeModal();
         alert(editingIndex !== null ? 'Alumno actualizado correctamente' : 'Alumno añadido correctamente');
 
     } catch (error) {
@@ -324,126 +431,29 @@ async function saveStudent() {
     }
 }
 
-// Elimina un alumno
-async function deleteStudent(index) {
-    if (!confirm('¿Estás seguro de que quieres eliminar este alumno?')) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/alumnos/${index}`, {
-            method: 'DELETE'
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-        }
-
-        const updatedData = await response.json();
-        currentData = updatedData; // Actualiza los datos locales
-        loadStudents(); // Recarga la tabla
-        alert('Alumno eliminado correctamente.');
-
-    } catch (error) {
-        console.error('Error al eliminar el alumno:', error);
-        alert(`Error al eliminar el alumno: ${error.message}`);
-    }
-}
-
-// Duplica un alumno
-async function duplicateStudent(index) {
-    try {
-        const response = await fetch(`/api/alumnos/${index}/duplicate`, {
-            method: 'POST'
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-        }
-
-        const updatedData = await response.json();
-        currentData = updatedData; // Actualiza los datos locales
-        loadStudents(); // Recarga la tabla
-        alert('Alumno duplicado correctamente.');
-
-    } catch (error) {
-        console.error('Error al duplicar el alumno:', error);
-        alert(`Error al duplicar el alumno: ${error.message}`);
-    }
-}
-
-// Abre el modal para añadir un nuevo alumno
-function openAddStudentModal() {
-    editingIndex = null;
-    modalTitle.textContent = 'Añadir Alumno';
-    studentForm.reset(); // Limpia el formulario del modal
-    studentIndexInput.value = ''; // Limpia el campo oculto
-    modal.style.display = 'block';
-}
-
-// Abre el modal para editar un alumno existente
-function openEditStudentModal(index) {
-    const student = currentData['alumnos'][index];
-    if (!student) return;
-
-    editingIndex = index;
-    modalTitle.textContent = 'Editar Alumno';
-    studentIndexInput.value = index;
-    studentNombreInput.value = student.nombre || '';
-    studentFechaNacInput.value = student.fechaNacimiento || '';
-    studentNecesidadesInput.value = student.necesidadesEspeciales || '';
-    studentNotasInput.value = student.notas || '';
-    modal.style.display = 'block';
-}
-
-// Cierra el modal
 function closeModal() {
     modal.style.display = 'none';
-    editingIndex = null; // Resetea el índice de edición
-}
-
-// Habilita/deshabilita los botones de acciones según la selección
-function enableActionButtons(index) {
-    if (index !== undefined && index >= 0) {
-        editAlumnoButton.disabled = false;
-        deleteAlumnoButton.disabled = false;
-        duplicateAlumnoButton.disabled = false;
-    } else {
-        editAlumnoButton.disabled = true;
-        deleteAlumnoButton.disabled = true;
-        duplicateAlumnoButton.disabled = true;
-    }
+    editingIndex = null;
 }
 
 // --- Event Listeners ---
-
-// Guardar todos los datos
 saveButton.addEventListener('click', saveAllData);
-
-// Guardar Como (Descargar)
 saveAsButton.addEventListener('click', downloadData);
-
-// Seleccionar Archivo (Cargar)
 selectFileButton.addEventListener('click', handleFileSelect);
 
-// Añadir alumno
-addAlumnoButton.addEventListener('click', openAddStudentModal);
+addAlumnoButton.addEventListener('click', addStudent);
+editAlumnoButton.addEventListener('click', editSelectedStudent);
+deleteAlumnoButton.addEventListener('click', deleteSelectedStudent);
+duplicateAlumnoButton.addEventListener('click', duplicateSelectedStudent);
 
-// Enviar formulario del modal (guardar alumno)
 studentForm.addEventListener('submit', (e) => {
-    e.preventDefault(); // Evita el envío normal del formulario
+    e.preventDefault();
     saveStudent();
 });
 
-// Cerrar modal con la X
 closeModalButton.addEventListener('click', closeModal);
-
-// Cerrar modal con el botón Cancelar
 cancelStudentButton.addEventListener('click', closeModal);
 
-// Cerrar modal haciendo clic fuera del contenido
 window.addEventListener('click', (event) => {
     if (event.target === modal) {
         closeModal();
@@ -451,5 +461,7 @@ window.addEventListener('click', (event) => {
 });
 
 // --- Inicialización ---
-// Carga los datos cuando la página se haya cargado completamente
 document.addEventListener('DOMContentLoaded', loadInitialData);
+
+// --- Escuchar cambios en el campo Edad para actualizar la fecha por defecto ---
+document.getElementById('edad').addEventListener('change', setStudentModalDate);
