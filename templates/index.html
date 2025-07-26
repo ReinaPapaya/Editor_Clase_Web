@@ -12,8 +12,12 @@
         <div class="general-frame">
             <div class="section-header">
                 <h2>Datos Generales</h2>
-                <button id="select-file-button" class="header-button">Seleccionar Archivo</button>
-                 <!-- Input file oculto -->
+                <div class="header-buttons-group">
+                    <button id="select-file-button" class="header-button">Seleccionar Archivo</button>
+                    <!-- Enlace a la página de debug -->
+                    <a href="/debug" class="header-button" target="_blank" title="Abrir panel de depuración">Debug</a>
+                </div>
+                <!-- Input file oculto -->
                 <input type="file" id="file-input" accept=".json" style="display:none;">
             </div>
             <form id="datos-generales-form">
