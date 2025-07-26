@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depuración - Editor de Alumnos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Estilos específicos para la página de debug */
+        .debug-container {
+            padding: 20px;
+            background-color: #ccebf5;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+        }
+        .debug-section {
+            margin-bottom: 30px;
+        }
+        .debug-section h2 {
+            color: #222222;
+            border-bottom: 2px solid #4A90E2;
+            padding-bottom: 5px;
+        }
+        .process-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .process-info-item {
+            background-color: #defef9;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .process-info-label {
+            font-weight: bold;
+            color: #4A90E2;
+        }
+        .logs-container {
+            background-color: #222222;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap; /* Para que se respeten los saltos de línea */
+        }
+        .debug-button {
+            background-color: #4A90E2;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .debug-button:hover {
+            background-color: #3A7BC8;
+        }
+        .loading {
+            color: #4A90E2;
+            font-style: italic;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>Panel de Depuración</h1>
+        
+        <div class="debug-section">
+            <h2>Información del Proceso</h2>
+            <div id="process-info" class="loading">Cargando información del proceso...</div>
+        </div>
+
+        <div class="debug-section">
+            <h2>Logs Recientes</h2>
+            <div id="logs" class="loading">Cargando logs...</div>
+            <button id="refresh-logs-button" class="debug-button">Actualizar Logs</button>
+            <button id="download-log-button" class="debug-button">Descargar Log Completo</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Función para formatear objetos JSON de forma legible ---
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '<').replace(/>/g, '>');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        // --- Función para cargar y mostrar la información de depuración ---
+        async function loadDebugInfo() {
+            try {
+                const response = await fetch('/api/debug/info');
+                if (!response.ok) {
+                    throw new Error(`Error al obtener información: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Mostrar información del proceso
+                const processInfoDiv = document.getElementById('process-info');
+                let processInfoHtml = '<div class="process-info-grid">';
+                for (const [key, value] of Object.entries(data.process_info)) {
+                    if (typeof value === 'object' && value !== null) {
+                        processInfoHtml += `<div class="process-info-item"><span class="process-info-label">${key}:</span><pre>${syntaxHighlight(JSON.stringify(value, null, 2))}</pre></div>`;
+                    } else {
+                        processInfoHtml += `<div class="process-info-item"><span class="process-info-label">${key}:</span> ${value}</div>`;
+                    }
+                }
+                processInfoHtml += '</div>';
+                processInfoDiv.innerHTML = processInfoHtml;
+
+                // Mostrar logs
+                const logsDiv = document.getElementById('logs');
+                if (data.logs && data.logs.length > 0) {
+                    logsDiv.innerHTML = `<div class="logs-container">${data.logs.join('<br>')}</div>`;
+                } else {
+                    logsDiv.innerHTML = '<div class="logs-container">No hay logs recientes.</div>';
+                }
+
+            } catch (error) {
+                console.error('Error al cargar información de depuración:', error);
+                document.getElementById('process-info').innerHTML = `<div class="error">Error al cargar información del proceso: ${error.message}</div>`;
+                document.getElementById('logs').innerHTML = `<div class="error">Error al cargar logs: ${error.message}</div>`;
+            }
+        }
+
+        // --- Función para descargar el log ---
+        async function downloadLog() {
+            try {
+                // Usar window.location.href para forzar la descarga
+                window.location.href = '/api/debug/download_log';
+            } catch (error) {
+                console.error('Error al iniciar la descarga del log:', error);
+                alert(`Error al descargar el log: ${error.message}`);
+            }
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDebugInfo(); // Cargar al inicio
+
+            document.getElementById('refresh-logs-button').addEventListener('click', loadDebugInfo);
+            document.getElementById('download-log-button').addEventListener('click', downloadLog);
+        });
+
+    </script>
+</body>
+</html>
