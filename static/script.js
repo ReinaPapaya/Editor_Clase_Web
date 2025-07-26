@@ -395,4 +395,140 @@ function setStudentModalDate() {
         }
     } else if (!isNaN(parseInt(edadInputValue, 10))) {
         // Si es un número válido, úsalo
-        edadAnios = parseInt(edadInputValue, 10
+        edadAnios = parseInt(edadInputValue, 10);
+    }
+    // Si no es ninguno de los casos anteriores, se mantiene el valor por defecto (3)
+
+    if (isNaN(edadAnios) || edadAnios < 1 || edadAnios > 20) {
+         edadAnios = 3; // Valor por defecto si la edad no es válida
+    }
+
+    const today = new Date();
+    const defaultDate = new Date(today.getFullYear() - edadAnios, today.getMonth(), today.getDate());
+
+    const minDate = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate());
+    const finalDate = defaultDate > today ? today : (defaultDate < minDate ? minDate : defaultDate);
+
+    const year = finalDate.getFullYear();
+    const month = String(finalDate.getMonth() + 1).padStart(2, '0');
+    const day = String(finalDate.getDate()).padStart(2, '0');
+    studentFechaNacInput.value = `${year}-${month}-${day}`;
+    
+    setFechaNacimientoConstraints();
+}
+
+function setFechaNacimientoConstraints() {
+     const today = new Date();
+     const maxDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+     const minDate = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate());
+     
+     // Formato para input type="date" es YYYY-MM-DD
+     const maxDateString = `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}-${String(maxDate.getDate()).padStart(2, '0')}`;
+     const minDateString = `${minDate.getFullYear()}-${String(minDate.getMonth() + 1).padStart(2, '0')}-${String(minDate.getDate()).padStart(2, '0')}`;
+     
+     studentFechaNacInput.max = maxDateString;
+     studentFechaNacInput.min = minDateString;
+}
+
+async function saveStudent() {
+    // Validaciones básicas
+    if (!studentNombreInput.value.trim()) {
+        alert('El nombre del alumno es obligatorio.');
+        return;
+    }
+    if (!studentFechaNacInput.value) {
+        alert('La Fecha de Nacimiento es obligatoria.');
+        return;
+    }
+
+    const studentData = {
+        nombre: studentNombreInput.value.trim(),
+        // Convertir fecha de YYYY-MM-DD a DD/MM/AAAA
+        fechaNacimiento: studentFechaNacInput.value.split('-').reverse().join('/'),
+        necesidadesEspeciales: studentNecesidadesInput.value.trim(),
+        notas: studentNotasInput.value.trim()
+    };
+
+    // --- Eliminar o modificar la validación de nombre único ---
+    // La validación de nombre único NO debe estar en el frontend para operaciones normales
+    // Solo se hacía en la app de escritorio por diseño.
+    // Si se desea evitar duplicados, debe ser una validación del backend opcional.
+    // Por ahora, se elimina esta restricción del frontend.
+    /*
+    if (editingIndex === null) { // Solo al añadir
+        const nombreExists = currentData.alumnos.some(alumno => alumno.nombre === studentData.nombre);
+        if (nombreExists) {
+            alert('Ya existe un alumno con ese nombre. Por favor, elige otro.');
+            return;
+        }
+    }
+    */
+    // --- Fin eliminación validación nombre único ---
+
+    try {
+        let response;
+        if (editingIndex !== null) {
+            response = await fetch(`/api/alumnos/${editingIndex}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(studentData)
+            });
+        } else {
+            response = await fetch('/api/alumnos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(studentData)
+            });
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
+        const updatedData = await response.json();
+        currentData = updatedData;
+        loadStudents();
+        closeModal();
+        alert(editingIndex !== null ? 'Alumno actualizado correctamente' : 'Alumno añadido correctamente');
+
+    } catch (error) {
+        console.error('Error al guardar el alumno:', error);
+        alert(`Error al guardar el alumno: ${error.message}`);
+    }
+}
+
+function closeModal() {
+    modal.style.display = 'none';
+    editingIndex = null;
+}
+
+// --- Event Listeners ---
+saveButton.addEventListener('click', saveAllData);
+saveAsButton.addEventListener('click', downloadData);
+selectFileButton.addEventListener('click', handleFileSelect);
+
+addAlumnoButton.addEventListener('click', addStudent);
+editAlumnoButton.addEventListener('click', editSelectedStudent);
+deleteAlumnoButton.addEventListener('click', deleteSelectedStudent);
+duplicateAlumnoButton.addEventListener('click', duplicateSelectedStudent);
+
+studentForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveStudent();
+});
+
+closeModalButton.addEventListener('click', closeModal);
+cancelStudentButton.addEventListener('click', closeModal);
+
+window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+        closeModal();
+    }
+});
+
+// --- Inicialización ---
+document.addEventListener('DOMContentLoaded', loadInitialData);
+
+// --- Escuchar cambios en el campo Edad para actualizar la fecha por defecto ---
+document.getElementById('edad').addEventListener('change', setStudentModalDate);
