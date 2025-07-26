@@ -353,3 +353,19 @@ body {
         justify-content: space-between;
     }
 }
+
+/* --- Estilo para el enlace Debug --- */
+/* Asegurar que los enlaces de encabezado se vean como botones */
+.header-buttons-group a.header-button {
+    text-decoration: none; /* Eliminar subrayado */
+    display: inline-block; /* Para que se comporte como un botón */
+    text-align: center; /* Centrar texto */
+    line-height: 1.2; /* Ajustar altura de línea */
+    box-sizing: border-box; /* Incluir padding/border en el ancho/altura */
+}
+.header-buttons-group a.header-button:hover {
+    color: #FFFFFF; /* Mantener color de texto en hover */
+    text-decoration: none; /* Asegurar que no se subraye al pasar el mouse */
+    background-color: #3A7BC8; /* Color de hover consistente */
+}
+/* --- Fin Estilo para el enlace Debug --- */
