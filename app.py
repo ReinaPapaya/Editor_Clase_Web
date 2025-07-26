@@ -6,39 +6,45 @@ import io
 import logging
 from datetime import datetime
 import uuid
+
+# --- Manejo condicional de psutil ---
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    psutil = None
+    PSUTIL_AVAILABLE = False
+    # El logging básico aún no está configurado aquí, así que usamos print para esta advertencia inicial
+    print("ADVERTENCIA: La librería 'psutil' no está disponible. La información detallada del proceso no se mostrará.")
+# --- Fin manejo condicional de psutil ---
+
+# --- Importaciones del data_manager ---
 from data_manager import load_data, save_data, add_student, edit_student, delete_student, duplicate_student
 
 # --- Configuración de Logging ---
-# Crear un logger específico para la app
 app_logger = logging.getLogger('editor_clase_web')
 app_logger.setLevel(logging.INFO)
 
-# Crear un directorio para los logs si no existe
 LOG_DIR = os.path.join(os.path.dirname(__file__), 'logs')
 os.makedirs(LOG_DIR, exist_ok=True)
 
-# Formato del log
 log_formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-# Handler para archivo (logs se guardan en 'logs/app.log')
 log_file_path = os.path.join(LOG_DIR, 'app.log')
 file_handler = logging.FileHandler(log_file_path, encoding='utf-8')
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(log_formatter)
 
-# Handler para consola (también se muestra en la consola/terminal)
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(log_formatter)
 
-# Añadir handlers al logger
-if not app_logger.handlers: # Evitar duplicados si se recarga la app
+if not app_logger.handlers:
     app_logger.addHandler(file_handler)
     app_logger.addHandler(console_handler)
 
-# Registrar inicio de la aplicación
 app_logger.info("Iniciando aplicación Editor Clase Web")
 # --- Fin Configuración de Logging ---
 
@@ -53,18 +59,16 @@ DATA_FILENAME = "datos_clase.json"
 # --- Función auxiliar para obtener información del proceso ---
 def get_process_info():
     """Obtiene información relevante del proceso."""
-    import psutil # Necesitarás añadir 'psutil' a requirements.txt
     import sys
-    
-    process = psutil.Process(os.getpid())
+
     info = {
-        "PID": process.pid,
-        "Nombre": process.name(),
-        "Estado": process.status(),
-        "Hora de inicio": datetime.fromtimestamp(process.create_time()).strftime('%Y-%m-%d %H:%M:%S'),
-        "CPU (%)": process.cpu_percent(),
-        "Memoria (MB)": round(process.memory_info().rss / 1024 / 1024, 2),
-        "Número de hilos": process.num_threads(),
+        "PID": "No disponible (psutil no instalado)" if not PSUTIL_AVAILABLE else "Error al obtener",
+        "Nombre": "No disponible (psutil no instalado)" if not PSUTIL_AVAILABLE else "Error al obtener",
+        "Estado": "No disponible (psutil no instalado)" if not PSUTIL_AVAILABLE else "Error al obtener",
+        "Hora de inicio": "No disponible (psutil no instalado)" if not PSUTIL_AVAILABLE else "Error al obtener",
+        "CPU (%)": "No disponible (psutil no instalado)" if not PSUTIL_AVAILABLE else "Error al obtener",
+        "Memoria (MB)": "No disponible (psutil no instalado)" if not PSUTIL_AVAILABLE else "Error al obtener",
+        "Número de hilos": "No disponible (psutil no instalado)" if not PSUTIL_AVAILABLE else "Error al obtener",
         "Versión de Python": sys.version,
         "Directorio de trabajo": os.getcwd(),
         "Ruta del script": os.path.abspath(__file__),
@@ -74,6 +78,22 @@ def get_process_info():
             "DATA_DIR": os.environ.get("DATA_DIR", "No definida")
         }
     }
+
+    # Si psutil está disponible, obtener información detallada
+    if PSUTIL_AVAILABLE and psutil:
+        try:
+            process = psutil.Process(os.getpid())
+            info["PID"] = process.pid
+            info["Nombre"] = process.name()
+            info["Estado"] = process.status()
+            info["Hora de inicio"] = datetime.fromtimestamp(process.create_time()).strftime('%Y-%m-%d %H:%M:%S')
+            info["CPU (%)"] = process.cpu_percent()
+            info["Memoria (MB)"] = round(process.memory_info().rss / 1024 / 1024, 2)
+            info["Número de hilos"] = process.num_threads()
+        except Exception as e:
+            app_logger.error(f"Error al obtener información detallada del proceso con psutil: {e}")
+            # La información básica ya está establecida con valores de error
+
     return info
 # --- Fin Función auxiliar ---
 
@@ -106,7 +126,7 @@ def get_debug_info():
                 lines_found = 0
                 buffer = bytearray()
                 pointer = file_size - 1
-                
+
                 while pointer >= 0 and lines_found < 100:
                     f.seek(pointer)
                     byte = f.read(1)
@@ -119,14 +139,14 @@ def get_debug_info():
                     else:
                         buffer.extend(byte)
                     pointer -= 1
-                
+
                 # Añadir la última línea si no termina con \n
                 if buffer and lines_found < 100:
                     line = buffer.decode('utf-8')[::-1]
                     log_lines.append(line)
-            
+
             log_lines.reverse() # Invertir para tener el orden correcto (más reciente al final)
-        
+
         app_logger.info("Información de depuración obtenida correctamente.")
         return jsonify({
             "process_info": process_info,
@@ -195,10 +215,10 @@ def upload_file():
         if 'file' not in request.files:
             app_logger.error("No se encontró 'file' en request.files")
             return jsonify({"error": "No se encontró archivo en la solicitud"}), 400
-        
+
         file = request.files['file']
         app_logger.info(f"Archivo recibido: {file.filename}")
-        
+
         if file.filename == '':
             app_logger.error("Nombre de archivo vacío")
             return jsonify({"error": "No se seleccionó ningún archivo"}), 400
@@ -208,7 +228,7 @@ def upload_file():
             app_logger.info(f"Contenido del archivo leído ({len(file_content)} chars)")
             uploaded_data = json.loads(file_content)
             app_logger.info("JSON parseado correctamente.")
-            
+
             if 'DatosGenerales' in uploaded_data and 'alumnos' in uploaded_data:
                 app_logger.info("Estructura básica validada.")
                 if save_data(uploaded_data, DATA_FILENAME):
@@ -257,12 +277,12 @@ def add_alumno():
         if not student_data or 'nombre' not in student_data or 'fechaNacimiento' not in student_data:
             app_logger.warning("Nombre o Fecha de Nacimiento no proporcionados en /api/alumnos POST")
             return jsonify({"error": "Nombre y Fecha de Nacimiento son obligatorios"}), 400
-        
+
         data = load_data(DATA_FILENAME)
         add_student(data, student_data)
         if save_data(data, DATA_FILENAME):
             app_logger.info(f"Alumno añadido: {student_data['nombre']}")
-            return jsonify(data), 200 
+            return jsonify(data), 200
         else:
             app_logger.error("Error al guardar el alumno añadido")
             return jsonify({"error": "Error al guardar el alumno"}), 500
@@ -277,7 +297,7 @@ def edit_alumno(index):
         if not updated_student_data or 'nombre' not in updated_student_data or 'fechaNacimiento' not in updated_student_data:
             app_logger.warning("Nombre o Fecha de Nacimiento no proporcionados en /api/alumnos/<index> PUT")
             return jsonify({"error": "Nombre y Fecha de Nacimiento son obligatorios"}), 400
-            
+
         data = load_data(DATA_FILENAME)
         edit_student(data, index, updated_student_data)
         if save_data(data, DATA_FILENAME):
