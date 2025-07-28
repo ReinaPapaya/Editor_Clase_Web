@@ -190,51 +190,56 @@ async function saveAllData() {
     }
 }
 
-// Descarga los datos actuales como un archivo JSON (funcionalidad de "Guardar Como")
+// Descarga los datos actuales como un archivo JSON
 async function downloadData() {
     try {
-        updateGeneralDataFromForm(); // Asegurarse de guardar datos del form primero
+        // 1. Enviar datos al servidor para que los prepare (opcional, pero mantiene la coherencia)
+        // Primero, actualizamos los datos generales del formulario en nuestra variable currentData
+        updateGeneralDataFromForm();
 
-        const response = await fetch('/api/descargar_datos');
+        // Opción 1 (Recomendada): Preparar los datos directamente en el frontend para descargar
+        // Esto evita enviar datos al servidor si no quieres que se guarden allí temporalmente.
+        const dataToDownload = JSON.parse(JSON.stringify(currentData)); // Clonar datos
+        const jsonStr = JSON.stringify(dataToDownload, null, 4);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
 
-        if (!response.ok) {
-            let errorMsg = `HTTP error! status: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.error || errorMsg;
-            } catch (e) {
-                // Si no se puede parsear como JSON, usa el mensaje de estado
-            }
-            throw new Error(errorMsg);
-        }
+        // Crear un nombre de archivo sugerido basado en la fecha/hora o datos generales
+        // Por ejemplo, usando la fecha y hora actual
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+        let filename = `datos_clase_${timestamp}.json`;
+        
+        // Opcional: Intentar usar el nombre del archivo cargado si existe
+        // Esto es más complejo en web, pero se puede simular
+        // Por ahora, usamos el nombre con timestamp
 
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'datos_clase.json';
-        if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (filenameMatch && filenameMatch[1]) {
-                filename = filenameMatch[1];
-            }
-        }
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = filename;
+        // Al NO especificar un valor para el atributo `download` o dejarlo vacío,
+        // el navegador suele mostrar el diálogo "Guardar como" permitiendo elegir nombre y ubicación.
+        // Si se especifica `a.download = filename;`, el navegador intentará usar ese nombre,
+        // pero aún puede mostrar el diálogo si la política de seguridad lo requiere.
+        // Para forzar el diálogo de elección de nombre/ubicación, es mejor NO asignar un valor específico
+        // o asignar el nombre que queremos sugerir.
+        a.download = filename; // Sugerir nombre. El navegador decide si mostrar diálogo.
+        
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+
+        // Limpiar
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100); // Pequeño retraso para asegurar la descarga
 
         // Ya no mostramos alerta al usuario
 
     } catch (error) {
-        console.error('Error al descargar los datos:', error);
+        console.error('Error al preparar la descarga:', error);
         // Ya no mostramos alerta al usuario
     }
 }
-
 // --- Funcionalidad de Carga de Archivo ---
 function handleFileSelect() {
     fileInput.click(); // Simula un clic en el input file oculto
