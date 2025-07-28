@@ -16,7 +16,7 @@ let isDuplicating = false; // Bandera para saber si venimos de duplicar
 // --- Elementos del DOM ---
 const datosForm = document.getElementById('datos-generales-form');
 const saveButton = document.getElementById('save-button');
-const saveAsButton = document.getElementById('save-as-button');
+const downloadButton = document.getElementById('download-button'); // Cambiado de saveAsButton
 const selectFileButton = document.getElementById('select-file-button');
 const fileInput = document.getElementById('file-input'); // Input file oculto
 
@@ -56,7 +56,7 @@ async function loadInitialData() {
         setFechaNacimientoConstraints();
     } catch (error) {
         console.error('Error al cargar los datos iniciales:', error);
-        alert('Error al cargar los datos. Por favor, recarga la página.');
+        // Ya no mostramos alertas al usuario
     }
 }
 
@@ -125,8 +125,13 @@ function loadStudents() {
         notasCell.textContent = student.notas;
         row.appendChild(notasCell);
 
-        // Evento para seleccionar fila
+        // Evento para seleccionar fila (clic simple)
         row.addEventListener('click', () => selectRow(index, row));
+        // Evento para editar (doble clic)
+        row.addEventListener('dblclick', () => {
+            selectRow(index, row); // Seleccionar primero
+            setTimeout(() => editSelectedStudent(), 10); // Pequeño retraso para asegurar selección
+        });
 
         alumnosTableBody.appendChild(row);
     });
@@ -177,14 +182,14 @@ async function saveAllData() {
 
         const result = await response.json();
         console.log(result.message);
-        alert('Datos guardados correctamente');
+        // Ya no mostramos alerta al usuario, solo registramos en consola
     } catch (error) {
         console.error('Error al guardar los datos:', error);
-        alert(`Error al guardar: ${error.message}`);
+        // Ya no mostramos alerta al usuario, solo registramos en consola
     }
 }
 
-// Descarga los datos actuales como un archivo JSON
+// Descarga los datos actuales como un archivo JSON (funcionalidad de "Guardar Como")
 async function downloadData() {
     try {
         updateGeneralDataFromForm(); // Asegurarse de guardar datos del form primero
@@ -221,11 +226,11 @@ async function downloadData() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        alert('Datos descargados correctamente.');
+        // Ya no mostramos alerta al usuario
 
     } catch (error) {
         console.error('Error al descargar los datos:', error);
-        alert(`Error al descargar: ${error.message}`);
+        // Ya no mostramos alerta al usuario
     }
 }
 
@@ -239,7 +244,7 @@ fileInput.addEventListener('change', async function(event) {
     if (!file) return;
 
     if (!file.name.endsWith('.json')) {
-        alert('Por favor, selecciona un archivo con extensión .json');
+        // Ya no mostramos alerta al usuario
         fileInput.value = '';
         return;
     }
@@ -263,12 +268,12 @@ fileInput.addEventListener('change', async function(event) {
         populateGeneralData();
         loadStudents();
         fileInput.value = ''; // Limpiar la selección
-        alert('Archivo cargado y datos actualizados correctamente.');
+        // Ya no mostramos alerta al usuario
         setFechaNacimientoConstraints(); // Reestablecer restricciones de fecha
 
     } catch (error) {
         console.error('Error al cargar el archivo:', error);
-        alert(`Error al cargar el archivo: ${error.message}`);
+        // Ya no mostramos alerta al usuario
         fileInput.value = '';
     }
 });
@@ -315,9 +320,9 @@ async function editSelectedStudent() {
 async function deleteSelectedStudent() {
     if (selectedRowIndex === null) return;
 
-    if (!confirm('¿Estás seguro de que quieres eliminar este alumno?')) {
-        return;
-    }
+    // Ya no pedimos confirmación con alert/confirm
+    // Se asume que la acción se realiza desde la UI con un botón que implica confirmación implícita
+    // o se podría añadir una confirmación visual en el futuro si se requiere.
 
     try {
         const response = await fetch(`/api/alumnos/${selectedRowIndex}`, {
@@ -332,11 +337,11 @@ async function deleteSelectedStudent() {
         const updatedData = await response.json();
         currentData = updatedData;
         loadStudents(); // Esto también reseteará selectedRowIndex
-        alert('Alumno eliminado correctamente.');
+        // Ya no mostramos alerta al usuario
 
     } catch (error) {
         console.error('Error al eliminar el alumno:', error);
-        alert(`Error al eliminar el alumno: ${error.message}`);
+        // Ya no mostramos alerta al usuario
     }
 }
 
@@ -373,11 +378,11 @@ async function duplicateSelectedStudent() {
         }
         // --- Fin nueva lógica ---
         
-        // alert('Alumno duplicado correctamente.'); // Opcional: eliminar el alert si se edita directamente
+        // Ya no mostramos alerta al usuario
 
     } catch (error) {
         console.error('Error al duplicar el alumno:', error);
-        alert(`Error al duplicar el alumno: ${error.message}`);
+        // Ya no mostramos alerta al usuario
     }
 }
 
@@ -387,17 +392,15 @@ function setStudentModalDate() {
     const edadInputValue = document.getElementById('edad').value;
     let edadAnios = 3; // Valor numérico por defecto
 
-    if (typeof edadInputValue === 'string' && edadInputValue.includes('año')) {
-        // Intentar extraer el número si el formato es "X años"
+    // Interpretar el texto "X años"
+    if (typeof edadInputValue === 'string') {
+        // Intentar extraer el número si el formato es "X años" o solo "X"
         const match = edadInputValue.match(/^(\d+)/);
         if (match) {
             edadAnios = parseInt(match[1], 10);
         }
-    } else if (!isNaN(parseInt(edadInputValue, 10))) {
-        // Si es un número válido, úsalo
-        edadAnios = parseInt(edadInputValue, 10);
     }
-    // Si no es ninguno de los casos anteriores, se mantiene el valor por defecto (3)
+    // Si no es un formato reconocible, se mantiene el valor por defecto (3)
 
     if (isNaN(edadAnios) || edadAnios < 1 || edadAnios > 20) {
          edadAnios = 3; // Valor por defecto si la edad no es válida
@@ -433,11 +436,11 @@ function setFechaNacimientoConstraints() {
 async function saveStudent() {
     // Validaciones básicas
     if (!studentNombreInput.value.trim()) {
-        alert('El nombre del alumno es obligatorio.');
+        // Ya no mostramos alerta al usuario
         return;
     }
     if (!studentFechaNacInput.value) {
-        alert('La Fecha de Nacimiento es obligatoria.');
+        // Ya no mostramos alerta al usuario
         return;
     }
 
@@ -448,22 +451,6 @@ async function saveStudent() {
         necesidadesEspeciales: studentNecesidadesInput.value.trim(),
         notas: studentNotasInput.value.trim()
     };
-
-    // --- Eliminar o modificar la validación de nombre único ---
-    // La validación de nombre único NO debe estar en el frontend para operaciones normales
-    // Solo se hacía en la app de escritorio por diseño.
-    // Si se desea evitar duplicados, debe ser una validación del backend opcional.
-    // Por ahora, se elimina esta restricción del frontend.
-    /*
-    if (editingIndex === null) { // Solo al añadir
-        const nombreExists = currentData.alumnos.some(alumno => alumno.nombre === studentData.nombre);
-        if (nombreExists) {
-            alert('Ya existe un alumno con ese nombre. Por favor, elige otro.');
-            return;
-        }
-    }
-    */
-    // --- Fin eliminación validación nombre único ---
 
     try {
         let response;
@@ -490,11 +477,11 @@ async function saveStudent() {
         currentData = updatedData;
         loadStudents();
         closeModal();
-        alert(editingIndex !== null ? 'Alumno actualizado correctamente' : 'Alumno añadido correctamente');
+        // Ya no mostramos alerta al usuario
 
     } catch (error) {
         console.error('Error al guardar el alumno:', error);
-        alert(`Error al guardar el alumno: ${error.message}`);
+        // Ya no mostramos alerta al usuario
     }
 }
 
@@ -505,7 +492,7 @@ function closeModal() {
 
 // --- Event Listeners ---
 saveButton.addEventListener('click', saveAllData);
-saveAsButton.addEventListener('click', downloadData);
+downloadButton.addEventListener('click', downloadData); // Cambiado
 selectFileButton.addEventListener('click', handleFileSelect);
 
 addAlumnoButton.addEventListener('click', addStudent);
