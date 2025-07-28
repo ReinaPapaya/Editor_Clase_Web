@@ -230,7 +230,7 @@ def upload_file():
             uploaded_data = json.loads(file_content)
             app_logger.info("JSON parseado correctamente.")
 
-            if 'DatosGenerales' in uploaded_data and 'alumnos' in uploaded_data:
+            if 'DatosGenerales' in uploaded_data and 'alumnos' in uploaded_data: # CORREGIDO: Falta ':'
                 app_logger.info("Estructura básica validada.")
                 if save_data(uploaded_data, DATA_FILENAME):
                     app_logger.info("Datos cargados y guardados en el servidor.")
@@ -275,7 +275,7 @@ def download_file():
 def add_alumno():
     try:
         student_data = request.get_json()
-        if not student_data or 'nombre' not in student_data or 'fechaNacimiento' not in student_
+        if not student_data or 'nombre' not in student_data or 'fechaNacimiento' not in student_data: # CORREGIDO: Falta ':'
             app_logger.warning("Nombre o Fecha de Nacimiento no proporcionados en /api/alumnos POST")
             return jsonify({"error": "Nombre y Fecha de Nacimiento son obligatorios"}), 400
 
@@ -296,7 +296,7 @@ def add_alumno():
 def edit_alumno(index):
     try:
         updated_student_data = request.get_json()
-        if not updated_student_data or 'nombre' not in updated_student_data or 'fechaNacimiento' not in updated_student_
+        if not updated_student_data or 'nombre' not in updated_student_data or 'fechaNacimiento' not in updated_student_data: # CORREGIDO: Falta ':'
             app_logger.warning("Nombre o Fecha de Nacimiento no proporcionados en /api/alumnos/<index> PUT")
             return jsonify({"error": "Nombre y Fecha de Nacimiento son obligatorios"}), 400
 
