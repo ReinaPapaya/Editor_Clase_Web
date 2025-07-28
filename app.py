@@ -230,7 +230,7 @@ def upload_file():
             uploaded_data = json.loads(file_content)
             app_logger.info("JSON parseado correctamente.")
 
-            if 'DatosGenerales' in uploaded_data and 'alumnos' in uploaded_
+            if 'DatosGenerales' in uploaded_data and 'alumnos' in uploaded_data:
                 app_logger.info("Estructura básica validada.")
                 if save_data(uploaded_data, DATA_FILENAME):
                     app_logger.info("Datos cargados y guardados en el servidor.")
