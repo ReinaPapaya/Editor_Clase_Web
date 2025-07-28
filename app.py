@@ -182,7 +182,7 @@ def custom_static(filename):
     return send_from_directory('static', filename)
 # --- Fin Rutas estáticas existentes ---
 
-# --- API Endpoints (mantener los existentes) ---
+# --- API Endpoints ---
 
 @app.route('/api/datos', methods=['GET'])
 def get_datos():
@@ -200,6 +200,7 @@ def save_datos():
         data = request.get_json()
         if save_data(data, DATA_FILENAME):
             app_logger.info("Datos guardados correctamente desde /api/datos")
+            # Ya no enviamos un mensaje de éxito al frontend
             return jsonify({"message": "Datos guardados correctamente"}), 200
         else:
             app_logger.error("Error al guardar datos en save_data")
@@ -229,7 +230,7 @@ def upload_file():
             uploaded_data = json.loads(file_content)
             app_logger.info("JSON parseado correctamente.")
 
-            if 'DatosGenerales' in uploaded_data and 'alumnos' in uploaded_data:
+            if 'DatosGenerales' in uploaded_data and 'alumnos' in uploaded_
                 app_logger.info("Estructura básica validada.")
                 if save_data(uploaded_data, DATA_FILENAME):
                     app_logger.info("Datos cargados y guardados en el servidor.")
@@ -268,13 +269,13 @@ def download_file():
         app_logger.error(f"Error al preparar la descarga: {e}")
         return jsonify({"error": f"Error al preparar la descarga: {str(e)}"}), 500
 
-# --- Endpoints para alumnos (mantener los existentes, con logs) ---
+# --- Endpoints para alumnos ---
 
 @app.route('/api/alumnos', methods=['POST'])
 def add_alumno():
     try:
         student_data = request.get_json()
-        if not student_data or 'nombre' not in student_data or 'fechaNacimiento' not in student_data:
+        if not student_data or 'nombre' not in student_data or 'fechaNacimiento' not in student_
             app_logger.warning("Nombre o Fecha de Nacimiento no proporcionados en /api/alumnos POST")
             return jsonify({"error": "Nombre y Fecha de Nacimiento son obligatorios"}), 400
 
@@ -282,6 +283,7 @@ def add_alumno():
         add_student(data, student_data)
         if save_data(data, DATA_FILENAME):
             app_logger.info(f"Alumno añadido: {student_data['nombre']}")
+            # Ya no enviamos un mensaje de éxito al frontend
             return jsonify(data), 200
         else:
             app_logger.error("Error al guardar el alumno añadido")
@@ -294,7 +296,7 @@ def add_alumno():
 def edit_alumno(index):
     try:
         updated_student_data = request.get_json()
-        if not updated_student_data or 'nombre' not in updated_student_data or 'fechaNacimiento' not in updated_student_data:
+        if not updated_student_data or 'nombre' not in updated_student_data or 'fechaNacimiento' not in updated_student_
             app_logger.warning("Nombre o Fecha de Nacimiento no proporcionados en /api/alumnos/<index> PUT")
             return jsonify({"error": "Nombre y Fecha de Nacimiento son obligatorios"}), 400
 
@@ -302,6 +304,7 @@ def edit_alumno(index):
         edit_student(data, index, updated_student_data)
         if save_data(data, DATA_FILENAME):
             app_logger.info(f"Alumno editado en índice {index}")
+            # Ya no enviamos un mensaje de éxito al frontend
             return jsonify(data), 200
         else:
             app_logger.error(f"Error al guardar el alumno editado en índice {index}")
@@ -319,6 +322,7 @@ def delete_alumno(index):
             delete_student(data, index)
             if save_data(data, DATA_FILENAME):
                 app_logger.info(f"Alumno eliminado en índice {index}: {deleted_name}")
+                # Ya no enviamos un mensaje de éxito al frontend
                 return jsonify(data), 200
             else:
                 app_logger.error(f"Error al guardar después de eliminar alumno en índice {index}")
@@ -339,6 +343,7 @@ def duplicate_alumno(index):
             duplicate_student(data, index)
             if save_data(data, DATA_FILENAME):
                 app_logger.info(f"Alumno duplicado desde índice {index}: {original_name}")
+                # Ya no enviamos un mensaje de éxito al frontend
                 return jsonify(data), 200
             else:
                 app_logger.error(f"Error al guardar después de duplicar alumno desde índice {index}")
