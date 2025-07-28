@@ -15,8 +15,8 @@ let isDuplicating = false; // Bandera para saber si venimos de duplicar
 
 // --- Elementos del DOM ---
 const datosForm = document.getElementById('datos-generales-form');
-const saveButton = document.getElementById('save-button');
-const downloadButton = document.getElementById('download-button'); // Cambiado de saveAsButton
+// const saveButton = document.getElementById('save-button'); // Eliminado
+const downloadButton = document.getElementById('download-button');
 const selectFileButton = document.getElementById('select-file-button');
 const fileInput = document.getElementById('file-input'); // Input file oculto
 
@@ -164,6 +164,7 @@ function updateActionButtons() {
 // --- Funciones de Interacción con la API ---
 
 // Guarda todos los datos (DatosGenerales + Alumnos)
+// Ya no se asocia a un botón, pero se puede llamar implícitamente si es necesario
 async function saveAllData() {
     updateGeneralDataFromForm();
     try {
@@ -491,8 +492,8 @@ function closeModal() {
 }
 
 // --- Event Listeners ---
-saveButton.addEventListener('click', saveAllData);
-downloadButton.addEventListener('click', downloadData); // Cambiado
+// saveButton.addEventListener('click', saveAllData); // Eliminado
+downloadButton.addEventListener('click', downloadData);
 selectFileButton.addEventListener('click', handleFileSelect);
 
 addAlumnoButton.addEventListener('click', addStudent);
